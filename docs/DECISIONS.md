@@ -21,3 +21,7 @@ Newest last. Each entry: what was decided, why, and what was rejected.
 ## 2026-11-13: FinMind tier findings (Lead)
 
 - Free account: 600 requests/hour. Three datasets need a paid tier: `TaiwanStockPriceAdj`, `TaiwanStockCapitalReductionReferencePrice`, `TaiwanStockMarketValue`. Fallbacks are in `docs/FINMIND_DATASETS.md`.
+
+## 2026-11-13: free official sources replace the three paid FinMind datasets (Lead)
+
+- TWSE and TPEx publish ex-rights, capital-reduction and quarterly-share data free back to 2015-06 (see `docs/OFFICIAL_SOURCES.md`). No paid tier is needed for the P0 set. Disposition and attention stock lists are now sourced from TWSE `punish` and `notice`. Rejected: paid FinMind tier. Risk accepted: the `rwd` / `www` endpoints are undocumented and scrape-grade, so every response is cached raw.
