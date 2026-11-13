@@ -62,3 +62,16 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 - **Option B confirmed** (official TWSE/TPEx files primary for the universe pass) on the survivorship and shares-issued grounds, since the original request-count reason did not hold.
 - **Snapshot job** runs as a manual daily command with catch-up. Rejected: a cron or systemd timer (WSL2 sleeps) and another always-on machine. Missed days for latest-only sources are lost and reported.
 - **Backup location for `data/raw/`:** decide later. `backup_dir` stays unset and QA reports it at each phase gate.
+
+## 2026-11-13: answers to the round 2 review questions (Ken)
+
+- **Altitude:** `docs/designs/data_platform.md` is an approval document. It keeps phase gates, ownership, schemas of record and acceptance criteria. Interface specs, file lists, test vectors, tooling and defaults go to Phase 0 task notes written by the Lead and checked against the zero-decision standard there. Rejected: a full zero-decision spec in the design (longer, harder to keep in sync as spikes change things).
+- **Failure behaviour:** stop and report. Three response classes (ok, transient, drift), no circuit breaker. Rejected: independent lanes per (host, dataset).
+- **Phase 2 scope:** all agent C, D and E datasets, as plan section 6.6 says. Rejected: seed-hypothesis datasets first.
+- **Check 1 reference:** the full FinMind price pull over the collection set is the independent listed-day reference. Rejected: sampling only.
+- **Snapshot scope:** all about 12 latest-only sources. Rejected: only sources that close a named gap.
+
+## 2026-11-13: earlier Lead-attributed decisions, recorded here as asked by the review (Lead proposals until Ken confirms)
+
+- **`available_at` for date-only sources:** next trading day 08:30 (Ken chose this when asked during drafting).
+- **Rejected alternatives:** per-dataset time rules and retrieval-time-going-forward (Ken, during drafting); ingesting both sources and reconciling (Ken, during drafting).
