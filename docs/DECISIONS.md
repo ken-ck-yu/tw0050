@@ -40,3 +40,9 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 ## 2026-11-13: TWSE full-delivery gap accepted (Ken, on the Lead's assessment)
 
 - No TWSE source for full-delivery status was found, and the daily files carry no marker. TPEx folds it into `chtm`. Impact is low: a stock must also rank in the top 200 by market cap and clear the NT$20M turnover floor, so only a handful of stock-months could slip in. QA reports how many. A daily `TWT85U` snapshot starts at approval. Rejected: further blind path searching.
+
+## 2026-11-13: FinMind live probe results (Ken ran the probe, Lead recorded)
+
+- One call returns the whole 2015-2026 range, so the request budget for FinMind datasets is one request per stock per dataset. Details in `docs/FINMIND_DATASETS.md`.
+- FinMind has no shares-issued rows for at least one delisted TPEx stock (3299). Official TWSE `MI_QFIIS` and TPEx `otc` stay primary for market cap and the universe.
+- `create_time` is blank for 93% of 2330's revenue rows, so the 10th-of-next-month rule is the main revenue `available_at` rule. Confirmed.
