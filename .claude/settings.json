@@ -6,7 +6,18 @@
       "Edit(./.env)",
       "Edit(./.env.*)",
       "Bash(cat .env*)",
-      "Bash(grep * .env*)"
+      "Bash(grep * .env*)",
+      "Edit(./audit/events.jsonl)",
+      "Edit(./.claude/hooks/**)"
     ]
+  },
+  "hooks": {
+    "SubagentStart":      [{ "hooks": [{ "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/audit.sh" }] }],
+    "SubagentStop":       [{ "hooks": [{ "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/audit.sh" }] }],
+    "PostToolUse":        [{ "hooks": [{ "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/audit.sh" }] }],
+    "PostToolUseFailure": [{ "hooks": [{ "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/audit.sh" }] }],
+    "PermissionRequest":  [{ "hooks": [{ "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/audit.sh" }] }],
+    "TaskCompleted":      [{ "hooks": [{ "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/audit.sh" }] }],
+    "SessionEnd":         [{ "hooks": [{ "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/audit.sh" }] }]
   }
 }
