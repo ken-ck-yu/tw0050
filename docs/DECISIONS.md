@@ -75,3 +75,9 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 
 - **`available_at` for date-only sources:** next trading day 08:30 (Ken chose this when asked during drafting).
 - **Rejected alternatives:** per-dataset time rules and retrieval-time-going-forward (Ken, during drafting); ingesting both sources and reconciling (Ken, during drafting).
+
+## 2026-11-13: spike results and Lead decisions (open to Ken's override)
+
+- **Spikes S1 to S4 resolved** (evidence in `docs/research/spikes_*_findings.md`). `MI_QFIIS` has no gaps for common stocks on four dates, so the FinMind shares-issued fallback chain is dropped (FinMind stays the cross-check). The common-stock rule is the regex plus the `-DR` name rule, with a trailing `*` stripped from names.
+- **Stock splits and par-value changes have no official source.** 0050 shows an apparent split between 2025-06-02 and 2025-07-21 with no event row. Handling: `config/manual_corporate_actions.yaml`, each entry with a source, entered as `split` or `par_value_change` rows, and check 3(b) lists any large move with no event. Rejected: the paid `TaiwanStockPriceAdj` tier. The split itself is inferred from prices and needs an independent confirmation.
+- **TPEx next-day limit sentinel** (`9999.95`/`0.01`, bond ETFs) is stored as null.

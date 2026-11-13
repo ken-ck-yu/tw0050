@@ -13,6 +13,13 @@ Swagger: TWSE `https://openapi.twse.com.tw/v1/swagger.json` (143 paths), TPEx `h
 * Names can carry stray whitespace (a leading tab was seen in `MI_QFIIS`). Strip them.
 * Stock codes are reused (2301 was Lite-On in 2002 and is today's Lite-On Technology). Join on code plus a date window, or on the ISIN.
 
+## Added by the spikes (2026-11-13)
+
+* `TWT84U` row for date D gives the limits for D (its `收盤價` is the previous trading day's close), 1,094 of 1,094 stocks on 2020-06-15. TPEx `otc` limit columns in file D are for the next trading day with a file (three pairs). About 98 TPEx rows carry a `9999.95`/`0.01` no-limit sentinel.
+* `TWT49U` takes one call for 2015-06-01 to 2026-11-13 (11,863 rows) but takes 9 to over 60 seconds. It covers ETFs (every 0050 dividend). `TWTAUU` covers stocks only. `exDailyQ` also lists ETFs. TPEx `revivt` has 21 to 29 rows per year for 2016 to 2021, dates in 7-digit ROC format, reasons `彌補虧損` and `現金減資`.
+* The common-stock rule (code `^[1-9][0-9]{3}$`, name without a trailing `*` not ending `-DR`) had no leaks or misses on 11 TWSE and 11 TPEx dates.
+* TPEx `otc` era boundary: first 17-field day is 2020-04-30.
+
 ## Verified history endpoints
 
 | Need | Endpoint | Verified |
@@ -25,7 +32,7 @@ Swagger: TWSE `https://openapi.twse.com.tw/v1/swagger.json` (143 paths), TPEx `h
 | TWSE one stock, one month | `…/afterTrading/STOCK_DAY?date=&stockNo=` | 2330 June 2015; delisted stocks up to their last trade |
 | TWSE PER / yield / PBR by date | `…/afterTrading/BWIBBU_d?date=&selectType=ALL` | 2015-06-01, 858 rows |
 | TWSE disposition and attention stocks | `…/announcement/punish`, `…/announcement/notice` (`startDate=&endDate=`) | 2015 and 2024 windows |
-| TWSE suspended securities | `…/afterTrading/TWTAWU?startDate=&endDate=` | June 2020: 5 rows. 2015 not tested |
+| TWSE suspended securities | `…/afterTrading/TWTAWU?startDate=&endDate=` | June 2020: 5 rows. 2015 window works but returned only 2 rows, both depositary receipts |
 | TPEx all-stock daily quotes incl. shares issued and next-day limit prices | `tpex.org.tw/www/zh-tw/afterTrading/otc?date=YYYY/MM/DD&type=EW` | One date per year 2016 to 2025, 720 to 966 rows |
 | TPEx ex-rights/dividends | `…/bulletin/exDailyQ?startDate=&endDate=` | 2016 full year, 510 rows. No capital reductions |
 | TPEx capital reductions | `…/bulletin/revivt?startDate=&endDate=` | From 2013-01: 19 rows in 2015, 20 in 2022 |
@@ -40,21 +47,21 @@ Request granularity: per date (about 2,780 trading days) for `MI_INDEX`, `MI_QFI
 ## What this settles
 
 * **Survivorship:** the all-stock daily files from both markets contain stocks that were later delisted (66 in the 2016-06-01 TWSE file, 7 named in the 2016-06-01 TPEx file). The universe can be built from them with no dependence on any delisting list.
-* **Last trading day:** it falls 3 to 13 days before the official delisting date in all six stocks checked (three TWSE, three TPEx). Derive the last trading day from the daily files, not from the delisting date. Delisting lists are a cross-check only.
-* **TWSE market cap:** `MI_QFIIS` gives issued shares per date. TPEx `otc` carries them daily. Market cap no longer depends on FinMind `TaiwanStockShareholding`. `MI_QFIIS` coverage against `MI_INDEX` is unmeasured (915 versus about 951 rows on comparable dates).
+* **Last trading day:** it fell 1 to 13 calendar days before the official delisting date in the six stocks checked (three TWSE, three TPEx). Derive the last trading day from the daily files, not from the delisting date. Delisting lists are a cross-check only.
+* **TWSE market cap:** `MI_QFIIS` gives issued shares per date. TPEx `otc` carries them daily. Market cap no longer depends on FinMind `TaiwanStockShareholding`. On four dates (2015-06-01, 2018-06-01, 2022-06-01, 2025-06-02) every common-stock code (858, 915, 964, 1,041) had a `MI_QFIIS` row. An earlier note of 915 versus 951 rows compared dates a year apart and was wrong.
 * **Capital reductions:** TWSE `TWTAUU` and TPEx `revivt` carry the reference price and reason. TPEx `exDailyQ` has none.
 * **Limit prices:** TWSE `TWT84U` and the TPEx `otc` next-day limit columns give actual limit prices for acceptance check 5.
 * **Benchmark:** the `MI_INDEX` total return table (TAIEX and Taiwan 50) is available every sampled year. FinMind `TaiwanStockTotalReturnIndex` has `data_id` `TAIEX` and `TPEx` (documented, not live-probed). 0050 itself is an ordinary stock row.
-* **Schema drift:** TWSE `MI_INDEX` had one field list over ten years. TPEx `otc` had two label variants. The label change is on 2025-01-10: two columns went from `(千股)` to `(張數)`. The values did not change (median bid volume 3, ask volume 2 either side, inferred from medians). `成交股數` is in shares in both eras. TPEx had a third variant before 2020 (fewer columns).
+* **Schema drift:** TWSE `MI_INDEX` had one field list over ten years. TPEx `otc` has three eras: 15 fields until 2020-04-29, 17 fields from 2020-04-30, and from 2025-01-10 the same 17 fields with two columns relabelled from `(千股)` to `(張數)`. The values did not change (median bid volume 3, ask volume 2 either side, inferred from medians). `成交股數` is in shares in all eras. Seven 2015 dates match the 2016 layout.
 
 ## Still unresolved
 
 * TWSE full-delivery (全額交割) status: no source found. TPEx folds it into `chtm`. TWSE `TWT85U` (changed trading) has no known rwd path and the swagger form has no date parameter.
-* TWSE `TWT96U` (borrowable shares) history, TWSE holiday-schedule history before the current year, TWSE `TWTAWU` back to 2015, and whether `MFI94U` returns a long range (it adds nothing over `MI_INDEX`).
+* TWSE `TWT96U` (borrowable shares) history, TWSE holiday-schedule history before the current year, and whether `MFI94U` returns a long range (it adds nothing over `MI_INDEX`).
 * TPEx suspension history before 2026: `bulletin/sprc` is today only and the OpenAPI history holds the current year only. `chtm` per day is a proxy.
 * TPEx delisted list completeness: transfers to TWSE may be missing.
-* TPEx `revivt` for 2016 to 2021 individually.
-* TWSE date-range limit per call and the `MI_QFIIS` coverage gap.
+* **No source for stock splits or par-value changes.** None of `TWT49U`, `TWTAUU`, `exDailyQ` or `revivt` carries them. 0050 closed 175.90 on 2025-06-02 and 51.45 on 2025-07-21 with no event row (inferred split). Handled through a manual corporate-actions file.
+* Publication times of `TWT84U`, TPEx `otc` limit columns and `MI_QFIIS` (no timestamp in the responses).
 
 ## Snapshot-only candidates (start a daily snapshot job early)
 
