@@ -56,3 +56,9 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 - **Cross-process limiter** is a file lock plus a timestamp per host, because no standard package provides it. FinMind is called by REST, not the `FinMind` package. `pandas` is dropped.
 - **Check thresholds** (0.1% adjusted-return tolerance, 99.9% exact close match, 2% to 40% membership turnover) are proposals in `config/settings.yaml`.
 - **Open for Ken:** confirm option B (official primary) on the survivorship and shares-issued grounds, since the original request-count reason did not hold. Snapshot job schedule. Backup location for `data/raw/`.
+
+## 2026-11-13: answers on option B, snapshot job and backup (Ken)
+
+- **Option B confirmed** (official TWSE/TPEx files primary for the universe pass) on the survivorship and shares-issued grounds, since the original request-count reason did not hold.
+- **Snapshot job** runs as a manual daily command with catch-up. Rejected: a cron or systemd timer (WSL2 sleeps) and another always-on machine. Missed days for latest-only sources are lost and reported.
+- **Backup location for `data/raw/`:** decide later. `backup_dir` stays unset and QA reports it at each phase gate.

@@ -91,8 +91,7 @@ These are the plan's section 7 checks, written here with the thresholds this des
 
 **Author decisions pending.**
 
-*   How the daily snapshot job runs on this machine (the machine can sleep, and a missed day cannot be recovered).
-*   Where `data/raw/` is backed up.
+*   Where `data/raw/` is backed up. The author chose to decide later. Until `backup_dir` is set, QA reports it as unset at each phase gate, and a loss of the cache costs about 12 hours of refetching.
 
 ## Technical Plan (Architecture)
 
@@ -100,7 +99,8 @@ These are the plan's section 7 checks, written here with the thresholds this des
 
 | Decision | Choice | Decided by | Basis |
 |---|---|---|---|
-| Source for the universe pass | Official TWSE/TPEx daily files | Author (to be confirmed, see Alternatives) | Survivorship-free, shares issued, official fields. The author's original reason (request count) did not hold |
+| Source for the universe pass | Official TWSE/TPEx daily files | Author, confirmed 2026-11-13 on the survivorship and shares-issued grounds | The original request-count reason did not hold |
+| Snapshot job schedule | A manual daily command with catch-up | Author | Missed days for sources with no date parameter are lost and reported |
 | `available_at` for date-only sources | Next trading day 08:30 | Author | One conservative rule that is easy to test |
 | Adjusted prices | Raw prices plus an event table, adjusted as of a time | Lead, from the review | One stored `available_at` per row cannot be point-in-time |
 | Idempotent writes | Append-only clean files, first-reported row chosen by a view | Lead, from the review | Fits first-reported rule and the no-overwrite gate |
@@ -235,7 +235,7 @@ Daylight saving is not needed in these rules: the US rule is anchored on the Tai
 *   **Backup:** after each phase gate, `data/raw/` is copied to a second location (open decision). `status --verify` reports raw files missing from state and state entries without a file.
 *   **State:** `data/state/<dataset>.json` records completed ranges (date ranges or stock ids), the schema era and `updated_at`, written atomically.
 *   **Clean writes:** each ingest run appends new Parquet files (`run-<timestamp>.parquet`) under `data/clean/<dataset>/v<N>/year=YYYY/`. Nothing is rewritten in place. DuckDB views give (a) the first-reported row per primary key (earliest `fetched_at`), (b) a revisions view of later rows with differing values. A parser fix writes a new version directory `v<N+1>` from raw, and a pointer file switches to it. The old version stays until the author approves deleting it, so no collected data is overwritten.
-*   **Snapshot job:** a stateless daily command fetches the snapshot-only sources (TWSE `TWT85U`, `TWT96U`, `BFI84U`, `TWTB4U`, `t187ap04_L`, `t187ap09_L`, `t187ap12_L`, `t187ap24_L` to `t187ap27_L`; TPEx `warning`, `sprc`), writing them through the same client and cache. Each snapshot table carries `snapshot_date` and `first_seen_at`. The run schedule is an open author decision. A missed day is reported by comparing snapshot dates against the trading calendar.
+*   **Snapshot job:** a stateless daily command fetches the snapshot-only sources (TWSE `TWT85U`, `TWT96U`, `BFI84U`, `TWTB4U`, `t187ap04_L`, `t187ap09_L`, `t187ap12_L`, `t187ap24_L` to `t187ap27_L`; TPEx `warning`, `sprc`), writing them through the same client and cache. Each snapshot table carries `snapshot_date` and `first_seen_at`. The author runs `python -m twdata snapshot` by hand once per trading day. Sources with a date parameter catch up on the next run. A missed day for a latest-only source cannot be recovered, and is reported by comparing snapshot dates against the trading calendar.
 
 ### Universe
 
@@ -276,7 +276,7 @@ Lead completes Phase 0. Agent A then runs the all-stock official pass and the un
 | Wrong `available_at` guess leaks the future | Medium | Invalid backtests | One conservative rule, as-of adjusted views, check 6, snapshot first-seen times compared with the rule table | Lead, F |
 | Survivorship returns through missing data | Medium | Biased universe | Universe built from all-stock daily files, null market caps counted, check 2 | A, F |
 | Loss of the raw cache | Low | 12 or more hours to refetch, snapshot history lost | Manifest with sha256, second copy after each phase, verify command | Lead |
-| Missed daily snapshot | High on a machine that sleeps | Permanent history gap | Missed-day report, run schedule (author decision), catch-up on next run for sources with a date parameter | A |
+| Missed daily snapshot | High with a manual daily run | Permanent history gap for latest-only sources | Missed-day report, catch-up on next run for sources with a date parameter, a reminder in the `status` output when the last snapshot is more than one trading day old | A |
 | Single source for TWSE shares issued | Medium | Mis-ranked universe | `MI_QFIIS` primary, FinMind cross-check, carry-forward limit, coverage spike S1 | A |
 | Disk usage grows | Low | Run stops | Measure after the first year, report when over 70% of free space (parameter) | Lead |
 | Source returns restated or corrected history | Medium | Values differ from first publication | First-reported view, revisions view, dictionary note on the 2026 start | All |
@@ -286,7 +286,7 @@ Lead completes Phase 0. Agent A then runs the all-stock official pass and the un
 
 ### Decision 1: source for the universe pass and prices
 
-*   **Option A, FinMind primary.** Pro: typed API, one request per stock per dataset for the whole range. Con: the stock list and shares issued are needed for every stock first, FinMind has no shares-issued rows for at least one delisted TPEx stock (3299), and the free tier only supports per-stock calls, so the universe pass costs about 2,000 or more requests before any ranking is possible. Not chosen. The author chose B when the comparison put FinMind at about 7.5 hours against about 8 for the official route, and that FinMind figure was not derived. The research shows request counts are comparable, so the choice now rests on the survivorship and shares-issued reasons above. The author is asked to confirm B on those grounds.
+*   **Option A, FinMind primary.** Pro: typed API, one request per stock per dataset for the whole range. Con: the stock list and shares issued are needed for every stock first, FinMind has no shares-issued rows for at least one delisted TPEx stock (3299), and the free tier only supports per-stock calls, so the universe pass costs about 2,000 or more requests before any ranking is possible. Not chosen. The author chose B when the comparison put FinMind at about 7.5 hours against about 8 for the official route, and that FinMind figure was not derived. The research shows request counts are comparable, so the choice now rests on the survivorship and shares-issued reasons above. The author confirmed B on those grounds on 2026-11-13.
 *   **Option B, official primary (chosen).** Pro: one request per date covers all stocks, files include later-delisted stocks, and include shares issued and limit prices. Con: about 12 hours of unattended requests on TWSE, undocumented endpoints, custom parsing. Request counts are comparable to FinMind, so the reason for the choice is independence and the official fields, not speed.
 *   **Option C, ingest both and reconcile.** Pro: conflicts found automatically across all data. Con: about double the storage and work and an undefined conflict rule. Rejected by author. The FinMind per-stock price cross-check for the collection set achieves most of the benefit.
 
