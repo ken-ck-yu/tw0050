@@ -36,3 +36,7 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 - **Revenue `available_at`**: FinMind `create_time` is the load date and exists only from 2026-04-21, so the 10th-of-next-month fallback is the primary rule, not a fallback.
 - **Open, needs Ken:** a live FinMind probe (maximum years per call, US ticker coverage, `create_time` and shares-issued blanks), and whether to accept the TWSE full-delivery gap.
 - **Correction:** the FinMind docs list the Free limit as 300 requests per hour and Register as 600. The live user-info endpoint reported 600 for this account on 2026-11-13, and that value wins.
+
+## 2026-11-13: TWSE full-delivery gap accepted (Ken, on the Lead's assessment)
+
+- No TWSE source for full-delivery status was found, and the daily files carry no marker. TPEx folds it into `chtm`. Impact is low: a stock must also rank in the top 200 by market cap and clear the NT$20M turnover floor, so only a handful of stock-months could slip in. QA reports how many. A daily `TWT85U` snapshot starts at approval. Rejected: further blind path searching.
