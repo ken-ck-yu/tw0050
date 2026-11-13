@@ -81,3 +81,8 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 - **Spikes S1 to S4 resolved** (evidence in `docs/research/spikes_*_findings.md`). `MI_QFIIS` has no gaps for common stocks on four dates, so the FinMind shares-issued fallback chain is dropped (FinMind stays the cross-check). The common-stock rule is the regex plus the `-DR` name rule, with a trailing `*` stripped from names.
 - **Stock splits and par-value changes have no official source.** 0050 shows an apparent split between 2025-06-02 and 2025-07-21 with no event row. Handling: `config/manual_corporate_actions.yaml`, each entry with a source, entered as `split` or `par_value_change` rows, and check 3(b) lists any large move with no event. Rejected: the paid `TaiwanStockPriceAdj` tier. The split itself is inferred from prices and needs an independent confirmation.
 - **TPEx next-day limit sentinel** (`9999.95`/`0.01`, bond ETFs) is stored as null.
+
+## 2026-11-13: FinMind probe 2 results (Ken ran the probe, Lead recorded)
+
+- **Spikes S7 and S9 resolved.** No cap on 11-year calls for the large datasets. FinMind closes have two decimals and matched the exchange in 20 of 20 pairs.
+- **0050 split confirmed from prices:** a 4-for-1 split resumed 2025-06-18 after a halt (2025-06-11 to 2025-06-17), with no official event row. It goes into `config/manual_corporate_actions.yaml` with the reference price to be taken from the exchange announcement. An earlier note citing "51.45 on 2025-07-21" was a misreading: 51.45 is the 2025-07-18 close.

@@ -62,3 +62,12 @@ Account: `level` Free, `api_request_limit` 600 per hour. The FinMind pricing pag
 | Stock info | 4,389 rows for 3,182 distinct `stock_id`. 1,080 ids have more than one row, so it carries dated changes. Whether `date` is the change date or a snapshot date is unknown |
 
 Consequences: FinMind is cheap for the heavy datasets (about 450 requests per dataset for a 450-stock collection set), but it cannot supply shares issued for delisted TPEx names, so the official files stay primary for the universe pass.
+
+## Live probe 2 results (2026-11-13, Free account, 20 requests)
+
+| Question | Result |
+|---|---|
+| Large-dataset call limits | One 11-year call returned `TaiwanStockInstitutionalInvestorsBuySell` 2330: 13,346 rows; `TaiwanStockSecuritiesLending` 2330: 17,960; `TaiwanFuturesDaily` `TX`: 63,914; `TaiwanFuturesInstitutionalInvestors` `TX`: 6,168 from 2018-06-05. `TaiwanStockMarginPurchaseShortSale`, `DayTrading`, `PER`, `TaiwanDailyShortSaleBalances`: 2,795 rows each. No round-number counts. `TaiwanStockDividendResult` 2330: 34 rows |
+| Price decimals and agreement | 2330 and 6488 closes: no values with more than 2 decimals over 2,795 rows each. 20 of 20 (stock, date) pairs matched the saved TWSE and TPEx closes exactly (ten dates, 2016 to 2025) |
+| 0050 split | Close 188.65 on 2025-06-10, no rows 2025-06-11 to 2025-06-17, 47.57 on 2025-06-18 (ratio about 4). `TaiwanStockDividendResult` has 0050 rows for 2025-01-17 and 2025-07-21 (before 198.05, after 195.35; before 51.45, after 51.09) and no row for the split |
+| Trading calendar | `TaiwanStockTradingDate` has 2,795 rows from 2015-06-01 to 2026-11-13, identical to 2330's price dates (no differences either way). Both come from FinMind, so this is not an independent check |
