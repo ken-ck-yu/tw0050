@@ -46,3 +46,13 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 - One call returns the whole 2015-2026 range, so the request budget for FinMind datasets is one request per stock per dataset. Details in `docs/FINMIND_DATASETS.md`.
 - FinMind has no shares-issued rows for at least one delisted TPEx stock (3299). Official TWSE `MI_QFIIS` and TPEx `otc` stay primary for market cap and the universe.
 - `create_time` is blank for 93% of 2330's revenue rows, so the 10th-of-next-month rule is the main revenue `available_at` rule. Confirmed.
+
+## 2026-11-13: design revision 2, architecture choices made by the Lead from the review and research (open to Ken's override)
+
+- **Adjusted prices** are raw prices plus an event table, adjusted as of a time. No stored adjusted table, because one `available_at` per row cannot be point-in-time.
+- **Idempotent writes** are append-only clean files, with a view picking the first-reported row. Parser fixes write a new version directory and the old one stays until Ken approves deleting it. Rejected: rewriting year partitions in place (overwrites collected data, conflicts with first-reported).
+- **Agent A** collects all-stock prices and shares issued (plan section 2), which removes the A, B, D dependency cycle.
+- **Universe pass** needs prices from 2015-03-02 so the first 60-day turnover window is complete. The universe starts 2015-06-30.
+- **Cross-process limiter** is a file lock plus a timestamp per host, because no standard package provides it. FinMind is called by REST, not the `FinMind` package. `pandas` is dropped.
+- **Check thresholds** (0.1% adjusted-return tolerance, 99.9% exact close match, 2% to 40% membership turnover) are proposals in `config/settings.yaml`.
+- **Open for Ken:** confirm option B (official primary) on the survivorship and shares-issued grounds, since the original request-count reason did not hold. Snapshot job schedule. Backup location for `data/raw/`.
