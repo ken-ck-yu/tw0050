@@ -1,0 +1,32 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Data (never commit; reproducible via ingest scripts)
+data/
+*.parquet
+*.csv
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Notebooks / OS / editor
+.ipynb_checkpoints/
+.DS_Store
+.vscode/
+.idea/
+*:Zone.Identifier
+
+# Claude Code local state
+.claude/settings.local.json
+.claude/logs/
+
+# Audit: commit reports/retrospectives, not raw event log (contains local paths)
+audit/events.jsonl
