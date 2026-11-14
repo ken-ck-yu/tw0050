@@ -124,3 +124,7 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 
 - For `split` and `par_value_change` entries the adjustment factor is exactly `1/ratio`. The 0050 resumption reference price was searched: press gives 47.32 (finance.technews.tw, 2025-06-17, Yuanta NAV-based) and 47.16 (money.udn.com, 2026-05-25, unsourced); no exchange announcement was found. Using either as `reference_price/halt_close` would put a 0.3% error into the benchmark's adjusted return, so the reference price is informational only. The ratio of 4 rests on FinMind's price gap (188.65 on 2025-06-10, 47.57 on 2025-06-18, halt 2025-06-11 to 2025-06-17) and on the press reports of the 1-for-4 split. Rejected: gating M0 on an official reference price.
 - Round 2 clarifications (TPEx `----` and ex-date text, the real TWSE holiday reply shape, `status_events.event_date`, `prices_raw.stock_name`, OpenAPI cache bypass) are in `docs/specs/m0_specs.md` section 17.
+
+## 2026-11-14: S6 resolved: stock_info key (Lead)
+
+- `stock_info` key is `stock_id, event_date, industry_category` (FinMind lists a stock once per industry category). Details in `docs/spikes/S6.md`.

@@ -237,7 +237,7 @@ _other("trading_calendar", "is_trading:BOOLEAN, source:VARCHAR", "event_date,sou
 _other(
     "stock_info",
     "stock_id:VARCHAR, stock_name:VARCHAR, industry_category:VARCHAR, type:VARCHAR",
-    "stock_id,event_date",
+    "stock_id,event_date,industry_category",
     "reference",
 )
 _other("delistings", "stock_id:VARCHAR, stock_name:VARCHAR", "stock_id,event_date", "reference")
