@@ -33,3 +33,6 @@ audit/events.jsonl
 
 # Agent worktrees (local only)
 .claude/worktrees/
+
+# Research run outputs stay local; research/experiment_log.jsonl is the record
+research/runs/
