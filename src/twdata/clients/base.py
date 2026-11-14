@@ -66,6 +66,7 @@ class Response:
     from_cache: bool = False
     fields: list | None = None
     reason: str = ""
+    fetched_at: datetime | None = None
 
     @property
     def records(self) -> list[dict]:
@@ -153,14 +154,16 @@ class Client:
             raise BlockedError(f"{self.host} answered HTTP 403")
         return result
 
-    def _build_response(self, spec, parsed, res: Result, body: bytes, from_cache: bool) -> Response:
+    def _build_response(
+        self, spec, parsed, res: Result, body: bytes, from_cache: bool, fetched_at=None
+    ) -> Response:
         try:
             rows, fields = extract(spec, parsed)
         except ShapeError:
             if res.rows:
                 raise
             rows, fields = [], None  # an ok-empty no-data reply has no rows path
-        return Response(res.klass, rows, body, parsed, from_cache, fields, res.reason)
+        return Response(res.klass, rows, body, parsed, from_cache, fields, res.reason, fetched_at)
 
     # ---- main entry --------------------------------------------------------------
 
@@ -192,7 +195,9 @@ class Client:
                 res = cls(HttpResult(200, {}, hit.body))
                 if res.klass == "ok":
                     self._check_cap(ds, res.rows, key)
-                    return self._build_response(spec, decode_json(hit.body), res, hit.body, True)
+                    return self._build_response(
+                        spec, decode_json(hit.body), res, hit.body, True, hit.fetched_at
+                    )
 
         waits = tuple(self.settings.retry_waits_s)
         attempts = len(waits) + 1
@@ -213,7 +218,9 @@ class Client:
                     self.cache.put(
                         spec.host, ds, key, url, params, result.status, result.body, fetched_at
                     )
-                return self._build_response(spec, decode_json(result.body), res, result.body, False)
+                return self._build_response(
+                    spec, decode_json(result.body), res, result.body, False, fetched_at
+                )
             if res.klass == "drift":
                 self._quarantine(spec, ds, key, url, params, result, fetched_at, res.reason)
                 raise DriftError(f"{spec.key}: {res.reason}")
