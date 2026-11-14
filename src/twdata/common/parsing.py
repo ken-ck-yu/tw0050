@@ -1,4 +1,4 @@
-"""Cell parsing. Unparseable non-empty text raises ParseError; documented empty markers give None."""
+"""Cell parsing. Unparseable non-empty text raises ParseError; empty markers give None."""
 
 from __future__ import annotations
 
