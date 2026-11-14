@@ -1,0 +1,21 @@
+# Test copy of the manual file: one entry with a null reference price, one with a sourced price.
+- market: TWSE
+  stock_id: "0050"
+  action_type: split
+  event_date: 2025-06-18
+  ratio: 4
+  halt_close: 188.65
+  reference_price: null
+  source: "test"
+  entered_by: test
+  entered_on: 2026-11-14
+- market: TPEx
+  stock_id: "9999"
+  action_type: par_value_change
+  event_date: 2020-03-02
+  ratio: 2
+  halt_close: 50.0
+  reference_price: 25.0
+  source: "test"
+  entered_by: test
+  entered_on: 2026-11-14
