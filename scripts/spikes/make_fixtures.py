@@ -46,7 +46,7 @@ def trim_table(tbl):
             m = SIGN_CELL.fullmatch(c.strip())
             if m:
                 sig.append("sign:" + m.group(1).strip())
-            if c.strip() in ("--", "0.00", "-"):
+            if c.strip() in ("--", "0.00", "-", "----", "---", "除息", "除權", "除權息"):
                 sig.append("cell:" + c.strip())
         new = [s for s in sig if s not in seen]
         if new and len(keep) < MAXROWS:

@@ -10,6 +10,8 @@ class ParseError(ValueError):
 
 
 _EMPTY = {"", "--", "-", "N/A"}
+_DASHES = re.compile(r"^-{2,}$")
+_EX_MARKS = {"除息", "除權", "除權息"}
 _NUM = re.compile(r"^[+-]?\d+(?:\.\d+)?$")
 _TAG = re.compile(r"<[^>]*>")
 
@@ -24,7 +26,7 @@ def strip_tags(text: str) -> str:
 
 def parse_number(text: str) -> float | None:
     s = _squash(text)
-    if s in _EMPTY or re.fullmatch(r"X\d*\.?\d*", s):
+    if s in _EMPTY or _DASHES.match(s) or re.fullmatch(r"X\d*\.?\d*", s):
         return None
     if not _NUM.match(s):
         raise ParseError(f"not a number: {text!r}")
@@ -57,3 +59,13 @@ def parse_sign(cell: str) -> int | None:
     if s == "X":
         return None
     raise ParseError(f"unknown sign cell: {cell!r}")
+
+
+def parse_tpex_change(text: str) -> tuple[float | None, bool]:
+    """TPEx change cell: (value, ex_flag). A number gives (value, False). An ex-rights or
+    ex-dividend day shows text (除息, 除權, 除權息) and gives (None, True). Dashes (a no-trade
+    row) give (None, False). Anything else raises ParseError."""
+    s = "".join(text.split())
+    if s in _EX_MARKS:
+        return None, True
+    return parse_number(text), False

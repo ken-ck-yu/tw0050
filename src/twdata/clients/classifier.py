@@ -80,10 +80,12 @@ def extract(spec: EndpointSpec, parsed) -> tuple[list, list | None]:
 
 
 def _is_no_data_body(parsed) -> bool:
+    """TWSE no-data reply: a stat message and no rows (extra keys allowed)."""
     return (
         isinstance(parsed, dict)
-        and set(parsed) == {"stat", "total"}
-        and isinstance(parsed["stat"], str)
+        and "data" not in parsed
+        and "tables" not in parsed
+        and isinstance(parsed.get("stat"), str)
         and any(p in parsed["stat"] for p in NO_DATA_PHRASES)
     )
 
@@ -129,6 +131,8 @@ def classify(
                 return Result("ok", "known no-data reply", 0)
             if spec.kind == "per_date" and verdict is False:
                 return Result("ok", "non-OK stat on a non-trading day", 0)
+            if spec.kind == "per_date" and allow_empty and _is_no_data_body(parsed):
+                return Result("ok", "known no-data reply (allow_empty)", 0)
             return Result("drift", f"stat {parsed['stat']!r} != {spec.stat_ok!r}")
     if spec.host == "finmind" and isinstance(parsed, dict) and spec.key != "finmind.user_info":
         if parsed.get("status") != 200:

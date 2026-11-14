@@ -70,3 +70,9 @@ def test_request_construction():
     spec = E.openapi_spec("twse", "/exchangeReport/TWT85U")
     assert spec.url == "https://openapi.twse.com.tw/v1/exchangeReport/TWT85U"
     assert spec.kind == "snapshot" and spec.stat_ok is None
+
+
+def test_tick_size_etf_and_monthly_revenue_columns():
+    assert tick_size(40, etf=True) == 0.01 and tick_size(60, etf=True) == 0.05
+    cols = S.TABLES["monthly_revenue"].columns
+    assert "revenue_month" in cols and "revenue_month_num" not in cols

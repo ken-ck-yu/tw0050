@@ -20,7 +20,11 @@ def check_price_row(row: dict) -> None:
         raise SanityError(f"close outside [low, high] in {row}")
 
 
-def tick_size(price: float, d: date | None = None) -> float:
+def tick_size(price: float, d: date | None = None, etf: bool = False) -> float:
+    """TWSE tick table. Stocks: 0.01 below 10, 0.05 below 50, 0.1 below 100, 0.5 below 500,
+    1 below 1000, 5 from 1000. ETFs: 0.01 below 50, 0.05 from 50."""
+    if etf:
+        return 0.01 if price < 50 else 0.05
     if price < 10:
         return 0.01
     if price < 50:

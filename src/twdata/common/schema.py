@@ -103,7 +103,7 @@ _joinable(
 _joinable(
     "monthly_revenue",
     "stock_id:VARCHAR, country:VARCHAR, revenue_year:BIGINT, "
-    "revenue_month_num:BIGINT, revenue:BIGINT, create_time:VARCHAR?",
+    "revenue_month:BIGINT, revenue:BIGINT, create_time:VARCHAR?",
     "stock_id,event_date",
     "economic",
 )

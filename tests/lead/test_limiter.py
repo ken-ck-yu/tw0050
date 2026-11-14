@@ -1,19 +1,9 @@
 import bisect
 import multiprocessing
-import time
+
+from limiter_worker import worker as _worker
 
 from twdata.clients.limiter import HostLimiter, QuotaLimiter
-
-
-def _worker(lock_path, state_path, log_path, interval, n):
-    lim = HostLimiter("t", interval, lock_path, state_path)
-    for _ in range(n):
-        with lim.slot():
-            start = time.time()
-            time.sleep(0.03)
-            end = time.time()
-        with open(log_path, "a") as f:
-            f.write(f"{start} {end}\n")
 
 
 def test_two_processes_never_overlap_and_respect_gap(tmp_path):

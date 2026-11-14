@@ -169,3 +169,17 @@ def test_token_never_in_cache_log_or_exception(tmp_path, monkeypatch, caplog):
 def test_client_is_constructible_without_rawcache_import():
     assert Client.__init__ is not None
     assert jb({"a": 1})
+
+
+def test_response_records_unique_field_names():
+    from twdata.clients.base import Response, unique_field_names
+
+    assert unique_field_names(["a ", "開盤競價基準", " ", "開盤競價基準", "開盤競價基準"]) == [
+        "a",
+        "開盤競價基準",
+        "col2",
+        "開盤競價基準#2",
+        "開盤競價基準#3",
+    ]
+    r = Response("ok", [[1, 2, 3, 4]], b"", None, False, ["x", "x", " ", "y"])
+    assert r.records == [{"x": 1, "x#2": 2, "col2": 3, "y": 4}]

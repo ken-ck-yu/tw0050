@@ -46,6 +46,17 @@ def request_key(method: str, url: str, params: dict) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def unique_field_names(fields) -> list[str]:
+    """Strip whitespace; blank names become col<i>; repeats get #2, #3 (deterministic)."""
+    seen: dict[str, int] = {}
+    out: list[str] = []
+    for i, f in enumerate(fields):
+        name = "".join(str(f).split()) or f"col{i}"
+        seen[name] = seen.get(name, 0) + 1
+        out.append(name if seen[name] == 1 else f"{name}#{seen[name]}")
+    return out
+
+
 @dataclass
 class Response:
     klass: str
@@ -58,13 +69,18 @@ class Response:
 
     @property
     def records(self) -> list[dict]:
-        """Rows as dicts keyed by field name (dict rows are returned as they are)."""
+        """Rows as dicts keyed by field name (dict rows are returned as they are).
+
+        Field names are stripped of whitespace. A blank name becomes ``col<i>`` and a repeated
+        name gets ``#2``, ``#3`` and so on, so no column is silently dropped.
+        """
+        names = unique_field_names(self.fields) if self.fields is not None else None
         out = []
         for r in self.rows:
             if isinstance(r, dict):
                 out.append(r)
-            elif self.fields is not None:
-                out.append(dict(zip(self.fields, r, strict=False)))
+            elif names is not None:
+                out.append(dict(zip(names, r, strict=False)))
             else:
                 raise DriftError("rows are lists but the response has no field list")
         return out

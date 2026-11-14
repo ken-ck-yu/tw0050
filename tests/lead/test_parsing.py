@@ -38,3 +38,36 @@ def test_sign_cells():
 
 def test_strip_tags():
     assert P.strip_tags("<b>a</b>b") == "ab"
+
+
+def test_dash_runs_are_empty_markers():
+    for cell in ("----", "---", "--"):
+        assert P.parse_number(cell) is None
+
+
+def test_tpex_change_cell():
+    assert P.parse_tpex_change("+ 3.50") == (3.5, False)
+    assert P.parse_tpex_change("- 0.50") == (-0.5, False)
+    assert P.parse_tpex_change("---") == (None, False)
+    for ex in ("除息", "除權", "除權息"):
+        assert P.parse_tpex_change(ex) == (None, True)
+    with pytest.raises(P.ParseError):
+        P.parse_tpex_change("停牌")
+
+
+def test_tpex_fixture_rows_parse():
+    import json
+    from pathlib import Path
+
+    base = Path(__file__).resolve().parents[1] / "fixtures" / "lead" / "tpex"
+    seen_ex = False
+    for name in ("otc_20160601.json", "otc_20200601.json", "otc_20250602.json"):
+        data = json.loads((base / name).read_text(encoding="utf-8"))["tables"][0]["data"]
+        for row in data:
+            for cell in row[2:7]:  # close, change, open, high, low
+                if cell.strip() in ("除息", "除權"):
+                    seen_ex = True
+                    assert P.parse_tpex_change(cell)[1] is True
+                else:
+                    P.parse_tpex_change(cell)
+    assert seen_ex
