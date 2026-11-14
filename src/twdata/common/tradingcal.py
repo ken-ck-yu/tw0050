@@ -51,3 +51,20 @@ class TradingCalendar:
 
     def __len__(self) -> int:
         return len(self._days)
+
+
+def load_calendar(settings) -> TradingCalendar:
+    """Trading days from the clean table `trading_calendar` (all sources, is_trading true)."""
+    import duckdb
+
+    from twdata.common import views
+
+    con = duckdb.connect()
+    try:
+        views.register_views(con, settings)
+        rows = con.execute(
+            "SELECT DISTINCT event_date FROM default_trading_calendar WHERE is_trading"
+        ).fetchall()
+    finally:
+        con.close()
+    return TradingCalendar(r[0] for r in rows)
