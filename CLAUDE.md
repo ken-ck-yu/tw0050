@@ -4,7 +4,7 @@ Phase 1 is data collection only. Read `DATA_COLLECTION_PLAN.md` first.
 
 1. **Point-in-time:** every table carries `event_date` and `available_at` (Asia/Taipei). Join features only on `available_at`. Rules per dataset are in plan section 4.
 2. **No secrets or data in git.** The token is `FINMIND_TOKEN`, loaded from the environment or a gitignored `.env`. Never read, print, log or commit it. `data/` is gitignored.
-3. **No modelling, backtesting, broker or trading code** in this phase.
+3. **No modelling, backtesting, broker or trading code** in this phase, except the early research lane in `docs/amendments/early_lane.md` (approved by the author on 2026-11-14). Broker, order and live-trading code stay forbidden.
 4. **Each agent edits only the files it owns.** The lead assigns ownership in every spawn prompt. Nobody edits `audit/events.jsonl`, `.claude/hooks/` or the validation suite except its owner.
 5. **The builder never grades its own work.** QA writes no ingestion code. Workers never edit the validation suite.
 6. **Human gates:** design approval, any paid FinMind tier, anything that deletes or overwrites collected data.

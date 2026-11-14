@@ -99,3 +99,9 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 ## 2026-11-14: design approved (Ken)
 
 - **`docs/designs/data_platform.md` revision 4 is approved**, and M0 may start. Known open items at approval: spikes S10, S11, S12, S5 and S6, the 0050 split reference price, the unset backup path, Ken's review of scraping terms of use, and three unreviewed fixes from round 3. Anything wrong later comes back for revision.
+
+## 2026-11-14: early research lane approved (Ken)
+
+- **Why:** Ken wants a fast signal on whether the strategy can make money, before all of Phase 1 data has passed QA.
+- **What:** `docs/amendments/early_lane.md`, referenced from rule 3 in `CLAUDE.md`. The lane opens only after M1 (prices, universe) and `monthly_revenue` have passed their gates. A frozen evaluator with full costs is owned by a separate agent. Development window 2015-06-01 to 2024-06-30 (train to 2021-12, validation 2022-01 to 2024-06), and a sealed holdout from 2024-07-01 that agents cannot read and only Ken unlocks, once. At most 10 backtests per cycle, all logged, with a committed hypothesis card first. All results are provisional until the full QA passes. Broker and order code stay forbidden.
+- **Rejected:** keeping the plan's order (finish all data and QA first).
