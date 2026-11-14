@@ -7,6 +7,7 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import duckdb
+import pyarrow.parquet as pq
 import pytest
 
 HERE = Path(__file__).resolve().parent
@@ -289,7 +290,10 @@ def test_fetched_at_is_utc_and_no_token_stored(tmp_path):
 
 
 def test_datasets_registry():
-    assert mr.DATASETS == {"monthly_revenue": mr.run}
+    assert mr.DATASETS == {
+        "monthly_revenue": mr.run,
+        "monthly_revenue_refresh": mr.run_refresh,
+    }
 
 
 class _Twse:
@@ -317,3 +321,77 @@ def test_check_unit_missing_official_row_is_drift(tmp_path):
     ctx.twse = _Twse([{"公司代號": "2317", "資料年月": "11312", "營業收入-當月營收": "1"}])
     with pytest.raises(DriftError):
         mr.check_unit(ctx, "2330", date(2024, 12, 1))
+
+
+def src_row(y, m, stock="2330", revenue=5):
+    return {
+        "date": "x",
+        "stock_id": stock,
+        "country": "Taiwan",
+        "revenue": revenue,
+        "revenue_month": m,
+        "revenue_year": y,
+        "create_time": "",
+    }
+
+
+def read_rows_safe(settings):
+    try:
+        return read_rows(settings)
+    except duckdb.CatalogException:
+        return []
+
+
+def test_pending_available_at_keeps_stock_open_and_refill_fills(tmp_path):
+    # March 2026 has no available_at (calendar ends 2026-03-31); the stock stays open
+    short = weekday_calendar(last=date(2026, 3, 31))
+    by = {"2330": [src_row(2025, 5), src_row(2026, 3)]}
+    ctx, t = make_ctx(tmp_path, by, calendar=short)
+    mr.run(ctx, START, END)
+    assert state.load(ctx.settings, "monthly_revenue") is None
+    assert row_for(read_rows(ctx.settings), "2330", date(2026, 3, 1))["available_at"] is None
+    # the calendar grows; the next run refetches and fills
+    ctx.calendar = weekday_calendar(last=date(2026, 6, 30))
+    ctx.finmind.cache.store.clear()  # the fake raw cache would answer the same request
+    mr.run(ctx, START, END)
+    assert len(t.calls) == 2
+    assert row_for(read_rows(ctx.settings), "2330", date(2026, 3, 1))["available_at"] == tpe(
+        2026, 4, 10
+    )
+    assert state.load(ctx.settings, "monthly_revenue")["completed"] == ["2330"]
+    mr.run(ctx, START, END)
+    assert len(t.calls) == 2
+
+
+def test_refresh_appends_only_the_new_month(tmp_path):
+    by = {"2330": [src_row(2025, 3), src_row(2025, 4)]}
+    ctx, t = make_ctx(tmp_path, by)
+    mr.run(ctx, START, END)
+    root = ctx.settings.data_dir / "clean" / "monthly_revenue"
+    before = set(root.rglob("*.parquet"))
+    by["2330"] = [src_row(2025, 3), src_row(2025, 4), src_row(2025, 5)]
+    mr.refresh_recent(ctx, months=3, today=date(2025, 6, 15))
+    assert t.calls[-1][2]["start_date"] == "2025-03-01"
+    assert t.calls[-1][2]["end_date"] == "2025-06-15"
+    new = set(root.rglob("*.parquet")) - before
+    assert len(new) == 1
+    rows = read_rows(ctx.settings)
+    assert [r["event_date"] for r in rows] == [date(2025, m, 1) for m in (3, 4, 5)]
+    assert pq.read_table(next(iter(new))).num_rows == 1
+
+
+def test_refresh_fills_pending_row_and_ignores_state(tmp_path):
+    short = weekday_calendar(last=date(2026, 3, 31))
+    ctx, t = make_ctx(tmp_path, {"2330": [src_row(2026, 3)]}, calendar=short)
+    mr.run(ctx, START, END)
+    ctx.calendar = weekday_calendar(last=date(2026, 6, 30))
+    mr.run_refresh(ctx, START, date(2026, 5, 1))
+    assert row_for(read_rows(ctx.settings), "2330", date(2026, 3, 1))["available_at"] is not None
+
+
+def test_drift_checked_on_every_row(tmp_path):
+    rows = [FIX_ROWS[0], {**FIX_ROWS[1], "extra": 1}]
+    ctx, _ = make_ctx(tmp_path, {"2330": rows})
+    with pytest.raises(DriftError):
+        mr.run(ctx, START, END)
+    assert read_rows_safe(ctx.settings) == []

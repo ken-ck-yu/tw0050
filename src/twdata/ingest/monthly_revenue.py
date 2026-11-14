@@ -13,7 +13,7 @@ import duckdb
 
 from twdata.clients.base import DriftError
 from twdata.common import state, views
-from twdata.common.timeutil import avail_revenue
+from twdata.common.timeutil import TAIPEI, avail_revenue
 
 DATASET = "monthly_revenue"
 SOURCE_DATASET = "TaiwanStockMonthRevenue"
@@ -81,9 +81,22 @@ def map_rows(source_rows: list[dict], calendar, fetched_at: datetime) -> list[di
     return out
 
 
-def run(ctx, start: date, end: date) -> None:
+def _need_calendar(ctx) -> None:
     if ctx.calendar is None:
         raise MissingCollectionSet("trading calendar not loaded; run the calendar ingest first")
+
+
+def _fetch_write(ctx, writer, stock_id: str, start: date, end: date | None) -> list[dict]:
+    source_rows = ctx.finmind.dataset(SOURCE_DATASET, start, end, data_id=stock_id)
+    fetched_at = datetime.now(UTC)  # the time dataset() returned
+    rows = map_rows(source_rows, ctx.calendar, fetched_at)
+    if rows:
+        writer.append(rows, fetched_at)
+    return rows
+
+
+def run(ctx, start: date, end: date) -> None:
+    _need_calendar(ctx)
     stocks = stock_list(ctx)
     doc = state.load(ctx.settings, DATASET)
     done = set(doc["completed"]) if doc else set()
@@ -91,13 +104,34 @@ def run(ctx, start: date, end: date) -> None:
     for stock_id in stocks:
         if stock_id in done:
             continue
-        source_rows = ctx.finmind.dataset(SOURCE_DATASET, start, end, data_id=stock_id)
-        fetched_at = datetime.now(UTC)
-        rows = map_rows(source_rows, ctx.calendar, fetched_at)
-        if rows:
-            writer.append(rows, fetched_at)
-        state.mark_stocks(ctx.settings, DATASET, [stock_id])
+        rows = _fetch_write(ctx, writer, stock_id, start, end)
+        # a pending available_at (past the calendar end) keeps the stock open for later runs
+        if all(r["available_at"] is not None for r in rows):
+            state.mark_stocks(ctx.settings, DATASET, [stock_id])
         ctx.cache.flush()
+
+
+def _months_back(d: date, months: int) -> date:
+    idx = d.year * 12 + (d.month - 1) - months
+    return date(idx // 12, idx % 12 + 1, 1)
+
+
+def refresh_recent(ctx, months: int = 3, today: date | None = None) -> None:
+    """Re-fetch the last `months` calendar months for every stock in collection_set. Identical
+    rows are skipped by the writer; new months are appended, restated values become new rows and
+    a pending available_at is filled. State is not read or changed."""
+    _need_calendar(ctx)
+    today = today or datetime.now(UTC).astimezone(TAIPEI).date()
+    start = _months_back(today, months)
+    writer = ctx.writers(DATASET)
+    for stock_id in stock_list(ctx):
+        _fetch_write(ctx, writer, stock_id, start, today)
+        ctx.cache.flush()
+
+
+def run_refresh(ctx, start: date, end: date) -> None:
+    """CLI entry: the window is the last 3 months before `end` (`start` is ignored)."""
+    refresh_recent(ctx, 3, end)
 
 
 def _find(row: dict, *needles: str) -> str:
@@ -134,4 +168,4 @@ def check_unit(ctx, stock_id: str, month: date) -> float:
     return fm_rows[0]["revenue"] / thousands
 
 
-DATASETS = {DATASET: run}
+DATASETS = {DATASET: run, "monthly_revenue_refresh": run_refresh}
