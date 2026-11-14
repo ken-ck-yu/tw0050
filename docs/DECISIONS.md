@@ -86,3 +86,12 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 
 - **Spikes S7 and S9 resolved.** No cap on 11-year calls for the large datasets. FinMind closes have two decimals and matched the exchange in 20 of 20 pairs.
 - **0050 split confirmed from prices:** a 4-for-1 split resumed 2025-06-18 after a halt (2025-06-11 to 2025-06-17), with no official event row. It goes into `config/manual_corporate_actions.yaml` with the reference price to be taken from the exchange announcement. An earlier note citing "51.45 on 2025-07-21" was a misreading: 51.45 is the 2025-07-18 close.
+
+## 2026-11-14: round 3 answers and Lead decisions (Ken, unless marked Lead)
+
+- **Calendar exception to D7 (Ken):** when both TWSE and TPEx return no rows on a day the FinMind calendar calls a trading day, record a calendar discrepancy and continue. Every other drift still stops the run.
+- **Snapshot capture starts now (Ken):** a minimal stopgap, `scripts/snapshot_capture.py`, captures 15 latest-only OpenAPI endpoints as raw responses under `data/raw/snapshots/`. Ken runs it once per trading day. The M1 job replaces it and imports its files. Rejected: waiting for the build. The TPEx suspension history for ROC 2026 (365 records) was also captured once on 2026-11-14.
+- **Phase 0 specs review (Ken):** a fresh-reviewer review of `docs/specs/` against the zero-decision standard (at most two rounds), with a one-page summary to Ken before agents build. Rejected: Lead check only, and Ken reading the specs in full.
+- **Stop revising (Ken):** fix the three round 3 Blockers and the mechanical items, then continue. No fourth review round before approval. Reason: speed to a profit test.
+- **Ownership enforcement (Lead):** a post-hoc `git diff --name-only` check by the Lead after each agent run, replacing the proposed `PreToolUse` hook. Reason: A to E share one agent type and a hook cannot confine Bash writes.
+- **Milestones renamed M0 to M3 (Lead)** so they do not collide with plan phases. **`price_limits` split from `prices_raw` (Lead).** **Quota headroom (Lead):** the FinMind limiter targets 85% of the user-info limit, so the estimate is 12.4 hours and the critical path about 20 hours. **TPEx ISIN is nullable (Lead).** **Check 4 threshold (Lead):** at most 1 mismatch in 500 (99.8%), replacing the 99.9% in an earlier entry, because 99.9% of 500 rounds to zero mismatches.
