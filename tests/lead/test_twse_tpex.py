@@ -204,3 +204,18 @@ def test_build_context_finmind_reads_user_info_once(tmp_path, monkeypatch):
     )
     assert ctx.finmind is not None and limiters["finmind"].updates == [(600, 3)]
     assert dataclasses.is_dataclass(ctx)
+
+
+def test_openapi_bypasses_the_cache_by_default(tmp_path):
+    """Two runs on different days must both reach the network (snapshots depend on it)."""
+    for cls, path in ((TwseClient, "/exchangeReport/TWT85U"), (TpexClient, "/tpex_spendi_today")):
+        s = settings(tmp_path)
+        t = FakeTransport(ok(jb([{"a": 1}])), ok(jb([{"a": 2}])))
+        c = cls(s, FakeLimiter(), FakeCache(), t, calendar=None, sleep=lambda x: None)
+        r1, _ = c.openapi(path)
+        r2, _ = c.openapi(path)
+        assert r1 == [{"a": 1}] and r2 == [{"a": 2}]
+        assert len(t.calls) == 2
+        # an explicit use_cache=True still reads the cache
+        r3, _ = c.openapi(path, use_cache=True)
+        assert len(t.calls) == 2 and r3 in ([{"a": 1}], [{"a": 2}])

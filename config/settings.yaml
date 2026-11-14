@@ -35,3 +35,8 @@ checks:
   churn_max: 0.40
   qa_seed: 20261114
 backup_dir: null
+research:
+  dev_end: 2024-06-30
+  train_end: 2021-12-31
+  cycle: 1
+  max_runs_per_cycle: 10

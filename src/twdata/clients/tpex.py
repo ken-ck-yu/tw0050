@@ -27,10 +27,12 @@ class TpexClient(Client):
         resp = self.fetch(spec, params, date=era_date, allow_empty=allow_empty)
         return resp.records, resp
 
-    def openapi(self, path: str) -> tuple[list[dict], Response]:
+    def openapi(self, path: str, *, use_cache: bool = False) -> tuple[list[dict], Response]:
+        """OpenAPI lists show the latest state only, so the cache is bypassed by default
+        (a cached body would hide every later day)."""
         spec = openapi_spec("tpex", path)
         _, params = build_request(spec)
-        resp = self.fetch(spec, params)
+        resp = self.fetch(spec, params, use_cache=use_cache)
         return resp.records, resp
 
     def otc(self, d: Date, *, allow_empty: bool = False):

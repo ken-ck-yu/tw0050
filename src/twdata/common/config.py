@@ -56,6 +56,14 @@ class Checks:
 
 
 @dataclass(frozen=True)
+class ResearchCfg:
+    dev_end: date
+    train_end: date
+    cycle: int
+    max_runs_per_cycle: int
+
+
+@dataclass(frozen=True)
 class Settings:
     data_dir: Path
     start_date: date
@@ -72,6 +80,7 @@ class Settings:
     raw_shard_max_responses: int
     disk_report_fraction: float
     checks: Checks
+    research: ResearchCfg
     backup_dir: Path | None
 
 
@@ -81,6 +90,7 @@ _NESTED = {
     "finmind": FinMindCfg,
     "row_caps": RowCaps,
     "checks": Checks,
+    "research": ResearchCfg,
 }
 
 
@@ -120,10 +130,21 @@ def load_settings(path: str | Path | None = None, data_dir_override: str | None 
     kwargs["retry_waits_s"] = tuple(kwargs["retry_waits_s"])
     bd = kwargs["backup_dir"]
     kwargs["backup_dir"] = Path(bd) if bd else None
+    r = kwargs["research"]
+    kwargs["research"] = ResearchCfg(
+        dev_end=_as_date(r.dev_end),
+        train_end=_as_date(r.train_end),
+        cycle=r.cycle,
+        max_runs_per_cycle=r.max_runs_per_cycle,
+    )
     for k in ("start_date", "window_start"):
         v = kwargs[k]
         kwargs[k] = v if isinstance(v, date) else date.fromisoformat(str(v))
     return Settings(**kwargs)
+
+
+def _as_date(v):
+    return v if isinstance(v, date) else date.fromisoformat(str(v))
 
 
 _ENV_LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")

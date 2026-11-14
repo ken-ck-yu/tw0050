@@ -59,3 +59,12 @@ def test_paths_under_data_dir(tmp_path):
     assert isinstance(paths.host_lock_file(s, "twse"), Path)
     with pytest.raises(ValueError):
         paths.raw_dir(s, "a", "b", "bogus")
+
+
+def test_research_settings():
+    from datetime import date
+
+    s = config.load_settings()
+    assert s.research.dev_end == date(2024, 6, 30)
+    assert s.research.train_end == date(2021, 12, 31)
+    assert s.research.max_runs_per_cycle == 10
