@@ -1,7 +1,7 @@
 # Taiwan Data Platform (Phase 1: data collection)
 
 *   **Author:** ken-ck-yu
-*   **Status:** Draft, revision 4 (after review round 3 and the author's answers). Not yet re-reviewed or approved.
+*   **Status:** Approved by the author on 2026-11-14 (revision 4). Not re-reviewed; the M0 specs get their own fresh-reviewer pass.
 *   **Date:** 2026-11-13
 
 --------------------------------------------------------------------------------

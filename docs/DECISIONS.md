@@ -95,3 +95,7 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 - **Stop revising (Ken):** fix the three round 3 Blockers and the mechanical items, then continue. No fourth review round before approval. Reason: speed to a profit test.
 - **Ownership enforcement (Lead):** a post-hoc `git diff --name-only` check by the Lead after each agent run, replacing the proposed `PreToolUse` hook. Reason: A to E share one agent type and a hook cannot confine Bash writes.
 - **Milestones renamed M0 to M3 (Lead)** so they do not collide with plan phases. **`price_limits` split from `prices_raw` (Lead).** **Quota headroom (Lead):** the FinMind limiter targets 85% of the user-info limit, so the estimate is 12.4 hours and the critical path about 20 hours. **TPEx ISIN is nullable (Lead).** **Check 4 threshold (Lead):** at most 1 mismatch in 500 (99.8%), replacing the 99.9% in an earlier entry, because 99.9% of 500 rounds to zero mismatches.
+
+## 2026-11-14: design approved (Ken)
+
+- **`docs/designs/data_platform.md` revision 4 is approved**, and M0 may start. Known open items at approval: spikes S10, S11, S12, S5 and S6, the 0050 split reference price, the unset backup path, Ken's review of scraping terms of use, and three unreviewed fixes from round 3. Anything wrong later comes back for revision.
