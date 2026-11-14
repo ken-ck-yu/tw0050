@@ -112,3 +112,10 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 - **Not covered by this authorisation (Lead's reading):** any paid FinMind tier; deleting or overwriting collected data; unlocking the sealed holdout; broker, order or live-trading code; reading, printing or logging `FINMIND_TOKEN` or `.env`; raising request rates above the design's limits; changing the early lane's rules; any change to `.claude/settings.json` or `.claude/hooks/`.
 - **Consequence:** steps that need the FinMind token (calendar, stock info, delistings, monthly revenue, other per-stock datasets) wait until Ken runs one prepared command. The first test result needs monthly revenue, so it is expected after that command, unless the Lead finds a tokenless route.
 - **Stop rules during the run:** any block, auth error or 4xx burst stops that source and is reported in the morning. An IP block is waited out (about 30 minutes) at most once.
+
+## 2026-11-14: FinMind token may be used at run time (Ken)
+
+- **Authorised:** the Lead may run scripts and the project CLI that load `FINMIND_TOKEN` from the gitignored `.env` into the process environment (for example by sourcing `.env` in the same shell command that starts the script). Ken said the token expires in 7 days and he can rotate it.
+- **Still forbidden (rule 2):** displaying, printing, logging, caching or committing the token or any request header, and any command whose output could show it (for example `env`, `printenv`, `cat .env`, `set -x`). Scripts print only whitelisted, non-secret fields. The Lead does not pass the token to subagents. FinMind runs are started by the Lead only.
+- **Free tier only:** any 402 or other 4xx stops the FinMind run and is reported. No paid tier is ever selected. The limiter keeps to 85% of the live user-info limit.
+- **Effect:** the FinMind steps (calendar, stock info, delistings, monthly revenue and the other per-stock datasets) no longer wait for Ken, so the first test result can come overnight.
