@@ -1,0 +1,37 @@
+# Required keys, no defaults in code. See docs/specs/m0_specs.md section 4.
+data_dir: data
+start_date: 2015-06-01
+window_start: 2015-03-02
+liquidity_floor_ntd: 20000000
+min_observed_days: 40
+universe_size: 200
+spacing_s:
+  twse: 5
+  tpex: 5
+timeout_s:
+  twse: 150
+  tpex: 60
+  finmind: 60
+retry_waits_s: [5, 10, 20, 40, 80]
+user_agent: "Mozilla/5.0 (compatible; twdata-research)"
+finmind:
+  target_fraction: 0.85
+  user_info_refresh_requests: 100
+row_caps:
+  finmind_default: 200000
+  twse: 50000
+  tpex: 50000
+  datasets: {}
+raw_shard_max_responses: 25
+disk_report_fraction: 0.7
+checks:
+  coverage: 0.99
+  close_sample: 500
+  adj_sample: 20
+  adj_return_tolerance: 0.001
+  check4_max_mismatch: 1
+  unexplained_move: 0.08
+  churn_min: 0.02
+  churn_max: 0.40
+  qa_seed: 20261114
+backup_dir: null

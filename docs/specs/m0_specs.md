@@ -1,0 +1,277 @@
+# M0 specs (Lead), revision 2
+
+Status: revision 2, after M0 spec review round 1 (2 reviewers, 9 + 4 Blockers, all addressed below). Implements `docs/designs/data_platform.md` (approved 2026-11-14). The zero-decision standard applies. Where this spec and the design differ, section 14 lists the difference and `docs/DECISIONS.md` records it.
+
+Dataset-specific parsing for agents A to E is in each agent's own spec (`docs/specs/m1_agent_a.md`, `m2_agent_b.md`, `m2_agent_c.md`, `m2_agent_d.md`, `m2_agent_e.md`, written by the Lead before that agent starts and reviewed the same way).
+
+## 1. Environment and tooling
+
+*   Python 3.13.11 in `.venv/` (gitignored). Supported range `>=3.11,<3.14`.
+*   Runtime: `pyarrow`, `duckdb`, `requests`, `pyyaml`, `filelock`, `tzdata`. Dev: `pytest`, `ruff`, `setuptools`, `wheel`. No `pandas`, no `python-dotenv` (the `.env` loader in `cli.py` is 10 lines, see section 8).
+*   `pyproject.toml`: `[build-system] requires = ["setuptools>=68"], build-backend = "setuptools.build_meta"`; `[tool.setuptools.packages.find] where = ["src"]`; `[tool.pytest.ini_options] pythonpath = ["src"], testpaths = ["tests"]`; `[tool.ruff] line-length = 100, target-version = "py311"` with `select = ["E","F","I","B","UP"]` and `[tool.ruff.lint.isort] known-first-party = ["twdata"]`; per-file ignore `E501` for `tests/**` (Chinese strings count double width).
+*   Lock: `pip freeze --exclude-editable > requirements.lock` after installing dependencies and before `pip install -e . --no-deps --no-build-isolation`.
+*   Commands: `ruff check src tests scripts`, `ruff format --check src tests scripts`, `pytest`. `scripts/snapshot_capture.py` is formatted with `ruff format` in M0.1 (the stopgap is edited by the Lead only for that).
+*   Entry: `python -m twdata` through `src/twdata/__main__.py`. All commands run under `.venv/bin/python`.
+
+## 2. Conventions
+
+*   **Dates** are `datetime.date`. **Timestamps** are timezone-aware `datetime.datetime`. In Parquet and DuckDB both `available_at` and `fetched_at` are stored as UTC (`TIMESTAMPTZ`, pyarrow `timestamp('us', tz='UTC')`). Rules compute in Asia/Taipei (`TAIPEI = ZoneInfo("Asia/Taipei")`, defined in `common/timeutil.py`) and convert to UTC on write.
+*   **Types.** `DATE`, `VARCHAR`, `BIGINT`, `DOUBLE`, `BOOLEAN`, `TIMESTAMPTZ`. Prices, ratios and other fractional values are `DOUBLE`, parsed once from the source text. Volumes, turnover, counts and share counts are `BIGINT`. A `?` after a type means nullable. Everything else is NOT NULL.
+*   **`market`** is `TWSE` or `TPEx` (these strings only). **Host keys** are `twse` (covers `www.twse.com.tw` and `openapi.twse.com.tw`), `tpex` (covers `www.tpex.org.tw`) and `finmind`.
+*   **Repo root** is the directory that contains `pyproject.toml`. `config/`, `data/` and `.env` resolve from the repo root, not from the current directory. Precedence for `data_dir`: CLI `--data-dir`, then env `TWDATA_DATA_DIR`, then `settings.yaml`.
+*   **FinMind tables** keep the source column names exactly as returned (case preserved) with `date` renamed `event_date`, and `stock_id` unchanged, plus the common columns.
+*   **No network** outside `src/twdata/clients/`. Scripts under `scripts/` and `scripts/spikes/` may use `urllib` or `requests` (they are not part of the package). The HTTP-import test scans `src/` only.
+
+## 3. Files and owners (M0)
+
+| Path | Purpose | Owner |
+|---|---|---|
+| `pyproject.toml`, `requirements.lock` | packaging | Lead |
+| `config/settings.yaml`, `config/watchlist.yaml`, `config/ownership.yaml`, `config/manual_corporate_actions.yaml` | settings, watchlist, per-agent allowed paths, manual split entries | Lead |
+| `src/twdata/__init__.py`, `__main__.py`, `cli.py` | CLI | Lead |
+| `src/twdata/common/{__init__,config,paths,timeutil,parsing,tradingcal,schema,endpoints,state,sanity,cleanstore,views}.py` | shared code | Lead |
+| `src/twdata/clients/{__init__,transport,limiter,rawcache,classifier,base,pair,context,finmind,twse,tpex}.py` | clients | Lead |
+| `src/twdata/ingest/__init__.py`, `src/twdata/universe/__init__.py` | empty packages (Lead creates, agents add modules beside them) | Lead |
+| `src/twdata/ingest/calendar_ingest.py` | FinMind trading calendar to `trading_calendar` | Lead |
+| `scripts/ownership_audit.py`, `scripts/calendar_stub.py`, `scripts/snapshot_capture.py`, `scripts/spikes/**` | audit, calendar stub, stopgap capture, spikes | Lead |
+| `tests/conftest.py`, `tests/lead/**`, `tests/fixtures/lead/**` | Lead tests and fixtures | Lead |
+| `docs/specs/**`, `docs/spikes/**`, `docs/DATA_DICTIONARY.md` (index), `docs/DECISIONS.md`, `docs/ITERATION_LOG.md`, `docs/amendments/**`, `docs/designs/**` | specs and records | Lead |
+| `audit/runs/*_lead*.md`, `.gitignore`, `.pre-commit-config.yaml`, `CLAUDE.md` | records, repo config | Lead (`.gitignore` per the design's author prerequisite 4) |
+
+Agent paths (all in `config/ownership.yaml`, section 9): agent tests live in `tests/agent_<a..e>/**` with fixtures in `tests/fixtures/agent_<a..e>/**`, never in Lead paths. `src/twdata/validate/**`, `tests/validate/**`, `data/raw/qa/**`, `docs/COVERAGE_REPORT.md`, `docs/QA_FINDINGS.md` and `audit/runs/*_f*.md` belong to agent F only. The `snapshot` and `rebuild-universe` commands call modules that agent A creates (`twdata.ingest.snapshots.run(ctx)` and `twdata.universe.build.rebuild(ctx, start, end)`), and while those modules are absent the CLI prints `not built yet (milestone M1)` and exits 5.
+
+## 4. Settings (`config/settings.yaml`)
+
+All keys are required. `backup_dir` must be present and may be `null`. A missing or unknown key raises `ConfigError`.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `data_dir` | `data` | data root |
+| `start_date` | `2015-06-01` | first universe date |
+| `window_start` | `2015-03-02` | first collection date |
+| `liquidity_floor_ntd` | `20000000` | 60-day median turnover floor |
+| `min_observed_days` | `40` | minimum observed days in the 60-day window |
+| `universe_size` | `200` | ranked members |
+| `spacing_s` | `{twse: 5, tpex: 5}` | minimum seconds from the end of one request to the start of the next, per host |
+| `timeout_s` | `{twse: 150, tpex: 60, finmind: 60}` | request timeouts |
+| `retry_waits_s` | `[5, 10, 20, 40, 80]` | backoff for `transient` (all hosts), so 6 attempts, then stop |
+| `user_agent` | `Mozilla/5.0 (compatible; twdata-research)` | generic, no personal details |
+| `finmind` | `{target_fraction: 0.85, user_info_refresh_requests: 100}` | limiter share, how often to re-read user-info |
+| `row_caps` | `{finmind_default: 200000, twse: 50000, tpex: 50000}` | per-call row counts above which a call fails closed (`DriftError`). A dataset can add its own entry under `row_caps.datasets` |
+| `raw_shard_max_responses` | `25` | responses per raw shard |
+| `disk_report_fraction` | `0.7` | report when `data/` uses more than this share of free space |
+| `checks` | `{coverage: 0.99, close_sample: 500, adj_sample: 20, adj_return_tolerance: 0.001, check4_max_mismatch: 1, unexplained_move: 0.08, churn_min: 0.02, churn_max: 0.40, qa_seed: 20261114}` | acceptance thresholds. `adj_return_tolerance` is also bounded below by one tick of the prior close using the TWSE tick table in `common/sanity.py` |
+| `backup_dir` | `null` | raw backup path (author decision pending) |
+
+Changes that affect data or `available_at` get an entry in `docs/DECISIONS.md`. The initial values above are recorded there in the M0 decision entry.
+
+## 5. Common modules
+
+**`config.py`.** `Settings` (frozen dataclass tree, one field per key). `repo_root() -> Path`. `load_settings(path=None, data_dir_override=None) -> Settings`. `load_env(path=None)` reads `.env` lines `KEY=VALUE` or `export KEY=VALUE` (optional single or double quotes, `#` comments, blank lines ignored) into `os.environ` without overriding existing variables, and never logs values.
+
+**`paths.py`.** All paths under `data_dir`; the only module that builds them. `raw_dir(s, source, dataset, area="raw")` (`area` is `raw` or `qa`, giving `data/raw/<source>/<dataset>` or `data/raw/qa/<source>/<dataset>`), `quarantine_dir(s, source, dataset)`, `clean_dir(s, table, version)`, `current_file(s, table)` (`data/clean/<table>/CURRENT`), `state_file(s, dataset)` (`data/state/<dataset>.json`), `manifest_file(s, source, dataset)`, `host_lock_file(s, host)` and `host_state_file(s, host)` (`data/state/locks/<host>.lock` and `.json`), `calendar_ledger(s)` (`data/state/calendar_discrepancy.jsonl`), `snapshot_dir(s)` (`data/raw/snapshots`, the stopgap layout, section 12). `ensure(path)`.
+
+**`timeutil.py`.**
+*   `TAIPEI`, `roc_to_date(text)`, `date_to_roc(d)` (`104/06/01`), `at(d, hour, minute)`, `to_utc(dt)`.
+*   `roc_to_date` accepts `104/06/01`, `104.06.01`, `1040601`, `104年06月01日` and the TPEx 7-digit form; year plus 1911; `ValueError` otherwise.
+*   `next_trading_day(d, cal) -> date | None` (strictly after; `None` past the calendar end). Defined here; `TradingCalendar.next_trading_day` delegates to it.
+*   Rules, each returning `datetime | None`, `None` when the calendar does not reach the needed date: `avail_same_day_1800(d)`, `avail_next_day_0830(d, cal)`, `avail_revenue(revenue_month, cal)` (the 10th of the following month if it is a trading day, otherwise the next trading day, at 18:00; `None` if that date is past the calendar end), `avail_financials(period_end, cal)` (`period_end` must be 31 March, 30 June, 30 September or 31 December else `ValueError`; deadline Q1 15 May, Q2 14 Aug, Q3 14 Nov of the same year, annual 31 Mar of the next year; then `avail_next_day_0830`), `avail_us(us_date)` (next Taiwan calendar day at 08:30), `avail_announcement(date, time_text|None, cal)` (the announcement date plus time parsed as `HH:MM` or `HH:MM:SS` Taipei time, otherwise `avail_next_day_0830`), `avail_max(*ts)` (latest, `None` if any is `None`), `clamp_snapshot_date(snapshot_date, first_seen_at)` (no later than the Taipei date of `first_seen_at`).
+
+**`parsing.py`.** Functions raise `ParseError` on unparseable non-empty text and return `None` only for the documented empty markers.
+*   `parse_number(text) -> float | None`: removes commas and all whitespace (including interior, so `"- 0.50"` is -0.5). `""`, `"--"`, `"-"`, `"N/A"` and any string that starts with `X` followed by a number (`"X0.00"`) return `None`. Anything else that is not a number raises.
+*   `parse_int(text) -> int | None`: as above, `"12.0"` is accepted only if the fraction is zero.
+*   `clean_name(text) -> str`: strips leading and trailing whitespace (tabs, full-width space), then one trailing `*`.
+*   `strip_tags(text) -> str`.
+*   `parse_sign(cell) -> int | None`: the `MI_INDEX` up/down cell, after `strip_tags`. The cells observed in the saved 2016-06-01 file are `<p style ='color:red'>+</p>`, `<p style ='color:green'>-</p>`, `<p> </p>` and `<p>X</p>`. Results: `+` is +1, `-` is -1, blank is 0 (unchanged or no trade), `X` is `None` (ex-rights or ex-dividend, change measured against the reference price). Any other cell raises `ParseError`. The TPEx change cell (`"+ 3.50"`, `"- 0.50"`) goes through `parse_number`.
+
+**`tradingcal.py`.** `TradingCalendar(days)` immutable, sorted. `is_trading(d)` (False for dates outside the covered range are an error: it raises `CalendarRangeError` when `d` is before the first day or after the last day), `next_trading_day(d)`, `prev_trading_day(d)`, `days_between(start, end)`, `first_day()`, `last_day()`. `load_calendar(settings) -> TradingCalendar` reads the clean table `trading_calendar` through the `as_latest_corrected` view and unions all rows with `is_trading` true, whatever their `source` (`finmind` or `stub`). The stub covers 2015-03-02 to 2015-05-29 (section 12). `classify` calls `is_trading` only for dates inside `[first_day, last_day]`; outside that range a per-date response with zero rows is `drift`.
+
+**`endpoints.py`.** `EndpointSpec(key, host, kind, url_template, params, date_format, rows_path, fields_path, stat_path, stat_ok, dataset, table_selector)`: where `kind` is `per_date`, `range`, `snapshot` or `stock_month`; `rows_path` and `fields_path` are lists of JSON keys or indexes (for `MI_INDEX` the path starts with a table selector, `table_selector = "title contains 每日收盤行情"`); `stat_ok` is `OK` (TWSE) or `ok` (TPEx) or `None` (OpenAPI lists and FinMind). `ENDPOINTS: dict[str, EndpointSpec]` holds the table in section 6.
+
+**`schema.py`.** `Table(name, columns: dict[str, str], key: tuple[str, ...], part: str, klass: "joinable" | "reference" | "derived", restatement: "economic" | "source_error" | "none")`. `part` is the column whose year partitions the files (`event_date` for all tables except `universe_membership` (`month_end`) and `collection_set` (`first_month_end`)). Common columns (`event_date` DATE, `available_at` TIMESTAMPTZ?, `fetched_at` TIMESTAMPTZ) are added to every `joinable` table, `fetched_at` to every table. `TABLES` is the registry in section 7. `Era(first_date, last_date | None, fields: tuple[str, ...])` with `last_date = None` meaning open-ended. `ERAS: dict[str, list[Era]]` keyed by endpoint key, section 6. Field lists are compared after stripping whitespace on both sides, exact otherwise (order and text). `register_table(table)` and `register_era(endpoint, era)` exist for a single table whose columns the owning agent fixes from its first live call (section 7), but `twdata.ingest` imports all its submodules in `__init__` (an `__all__` import loop written by the Lead) so the registry is complete in the CLI, in views and in agent F.
+
+**`state.py`.** One JSON file per dataset at `paths.state_file`: `{"dataset": str, "key_type": "date" | "stock", "completed": [["2015-03-02","2015-03-31"], ...] (date ranges, ISO, merged, inclusive) or ["2330", ...] (sorted stock ids), "era": str | null, "updated_at": ISO UTC, "shards": [shard file names that back the entry]}`. Functions: `load(s, dataset)`, `mark_dates(s, dataset, start, end, *, era=None, shards=())`, `mark_stocks(s, dataset, stock_ids, *, shards=())`, `is_done(s, dataset, d)`, `missing(s, dataset, start, end, calendar)` (trading days not covered), `entries(s)`. Writes are atomic (temporary file, `os.replace`) under a file lock. `mark_*` merges overlapping and adjacent ranges and unions shard names.
+
+**`sanity.py`.** `check_price_row(row) -> None` raises `SanityError` (mapped to drift, exit 4) when `high < low`, or `close` is outside `[low, high]`, or any price is negative. The limit check (close inside `limit_up`/`limit_down`) is acceptance check 5, not an ingest check, because `price_limits` arrives in a separate pass. `tick_size(price, d) -> float` returns the TWSE tick for a price (0.01 below 10, 0.05 below 50, 0.1 below 100, 0.5 below 500, 1 below 1000, 5 from 1000), used for the check 3 lower bound.
+
+**`cleanstore.py`.** `CleanWriter(settings, table)`.
+*   `append(rows: list[dict], fetched_at: datetime) -> list[Path]`. The caller supplies every column of the table except `fetched_at`, including `event_date` and `available_at` (null allowed when pending). It validates names, types and nullability. It asserts the key is unique within the batch (`KeyUniquenessError`) and that every non-null `available_at >= event_date` (`PointInTimeError`). It splits rows by the year of `table.part`.
+*   **Identical-row skip.** For each row, compare all columns except `fetched_at` and `available_at` with the latest stored row for the key. Identical rows are skipped, unless the stored `available_at` is null and the new one is not null, which is written as a **fill** (a new row carrying the same values). Otherwise a changed value is written as a new row.
+*   **Reading the latest row** is done with DuckDB over that year's files only (the partition is known from the key's `part` value), so cost is bounded.
+*   **Files.** `data/clean/<table>/v<N>/year=YYYY/run-<UTC yyyymmddThhmmssffffff>-<uuid8>.parquet`, written to a temporary name and renamed. No existing file is modified or deleted. The return value is the list of paths written (empty when everything was skipped).
+*   `current_version(s, table) -> int` reads `data/clean/<table>/CURRENT` (one line, the integer; absent means 1). `set_current(s, table, version)` writes it atomically and requires `data/clean/<table>/v<version>` to exist. A parser fix writes a new `v<N+1>` from raw and then calls `set_current`. The old version stays until the author approves deleting it.
+*   `check_unique(con, table)` runs the primary key uniqueness assertion on the `as_first_seen` view and raises `KeyUniquenessError`.
+
+**`views.py`.** `register_views(con, settings)` creates, for every table with clean files: `as_first_seen_<t>`, `as_latest_corrected_<t>`, `revisions_<t>`, and `default_<t>` (the first for `economic`, the second for `source_error` and `none`). Rules, using the current `v<N>` only and `read_parquet` over absolute globs with `hive_partitioning = false` and `union_by_name = true`:
+*   For a key, the **first row** is the one with the earliest `fetched_at` (ties broken by file name). Its `available_at` is the earliest non-null `available_at` among rows of that key whose value columns equal the first row's (so a **fill** supplies the pending value). If no such row has a non-null value, it stays null.
+*   The **latest row** is the one with the latest `fetched_at` (ties by file name), with the same `available_at` substitution.
+*   A **revision** is a row whose value columns differ from the first row's. In `revisions_<t>` its `available_at` is `max(available_at, fetched_at)` (both UTC, so the comparison is exact).
+*   `listing_status` (first date, last date and market per `stock_id` from `prices_raw`) and `adjusted_as_of` are created by agents A and B respectively, through `register_view(name, sql)` which the Lead provides.
+
+## 6. Endpoints, requests and eras
+
+Base URLs: TWSE `https://www.twse.com.tw/rwd/zh/`, TWSE OpenAPI `https://openapi.twse.com.tw/v1`, TPEx `https://www.tpex.org.tw/www/zh-tw/`, TPEx OpenAPI `https://www.tpex.org.tw/openapi/v1`. Every request carries `response=json` where the table says so and the `User-Agent` from settings. Date formats: TWSE `YYYYMMDD`, TPEx `YYYY/MM/DD` (range endpoints use `startDate` and `endDate`, inclusive).
+
+| Key | Host | Path and parameters | Kind | Rows and fields | Stat |
+|---|---|---|---|---|---|
+| `twse.mi_index` | twse | `afterTrading/MI_INDEX` `date`, `type=ALLBUT0999`, `response=json` | per_date | `tables[]` where title contains `每日收盤行情`; rows `data`, fields `fields` | `OK` |
+| `twse.mi_qfiis` | twse | `fund/MI_QFIIS` `date`, `selectType=ALLBUT0999`, `response=json` | per_date | top-level `data`, `fields` | `OK` |
+| `twse.twt84u` | twse | `variation/TWT84U` `date`, `response=json` | per_date | top-level | `OK` |
+| `twse.bwibbu_d` | twse | `afterTrading/BWIBBU_d` `date`, `selectType=ALL`, `response=json` | per_date | top-level | `OK` |
+| `twse.stock_day` | twse | `afterTrading/STOCK_DAY` `date`, `stockNo`, `response=json` | stock_month | top-level | `OK` |
+| `twse.twt49u` | twse | `exRight/TWT49U` `startDate`, `endDate`, `response=json` | range | top-level | `OK` |
+| `twse.twtauu` | twse | `reducation/TWTAUU` `startDate`, `endDate`, `response=json` | range | top-level | `OK` |
+| `twse.twtawu` | twse | `afterTrading/TWTAWU` `startDate`, `endDate`, `response=json` | range | top-level | `OK` |
+| `twse.punish` | twse | `announcement/punish` `startDate`, `endDate`, `response=json` | range | top-level | `OK` |
+| `twse.notice` | twse | `announcement/notice` `startDate`, `endDate`, `response=json` | range | top-level | `OK` |
+| `tpex.otc` | tpex | `afterTrading/otc` `date`, `type=EW`, `response=json` | per_date | `tables[0].data`, `tables[0].fields` | `ok` |
+| `tpex.chtm` | tpex | `afterTrading/chtm` `date`, `response=json` | per_date | `tables[0]` | `ok` |
+| `tpex.ex_daily` | tpex | `bulletin/exDailyQ` `startDate`, `endDate`, `response=json` | range | `tables[0]` | `ok` |
+| `tpex.revivt` | tpex | `bulletin/revivt` `startDate`, `endDate`, `response=json` | range | `tables[0]` | `ok` |
+| `tpex.disposal` | tpex | `bulletin/disposal` `startDate`, `endDate`, `type=all`, `response=json` | range | `tables[0]` | `ok` |
+| `tpex.attention` | tpex | `bulletin/attention` `startDate`, `endDate`, `response=json` | range | `tables[0]` | `ok` |
+| `tpex.trading_stock` | tpex | `afterTrading/tradingStock` `code`, `date`, `response=json` | stock_month | `tables[0]` | `ok` |
+| `tpex.deListed` | tpex | `company/deListed` `date=YYYY`, `code=`, `reason=-1`, `response=json` | range (one year) | `tables[0]` | `ok` |
+| `twse.openapi.<path>` / `tpex.openapi.<path>` | twse/tpex | OpenAPI GET | snapshot | bare JSON list, no stat | none |
+
+For the `tables[0]` and top-level paths of the TPEx range endpoints and the TWSE range endpoints, the Lead confirms the exact shape against the saved fixtures before the M0 gate and corrects this table. A mismatch at run time is `drift`. Calendar-driven chunking: range endpoints are called with at most one calendar year per request (`TWT49U` is allowed the full span in one call, per spike S3, with the 150 s timeout). Response bodies are stored as bytes. Text decoding is UTF-8 with errors raised.
+
+**Eras (`ERAS`).** `twse.mi_index` has one open-ended era (the per-stock table, 16 fields: `證券代號, 證券名稱, 成交股數, 成交筆數, 成交金額, 開盤價, 最高價, 最低價, 收盤價, 漲跌(+/-), 漲跌價差, 最後揭示買價, 最後揭示買量, 最後揭示賣價, 最後揭示賣量, 本益比`), first date 2015-03-02 (observed from 2015-06-01 back to the first sample). `tpex.otc` has three eras: 15 fields until 2020-04-29, 17 fields (with `最後買量<br>(千股)`, `最後賣量<br>(千股)`) from 2020-04-30 to 2025-01-09, and 17 fields (with `(張數)`) from 2025-01-10 open-ended. The exact field tuples are read from `tests/fixtures/lead/tpex/otc_*.json` and written into `schema.py` in M0.3, and the test compares them to the fixtures. Other endpoints get one open-ended era from their fixture. A field list that matches no era valid on the date is `drift`.
+
+## 7. Table registry (`schema.py`, exact)
+
+`joinable` tables carry `event_date DATE, available_at TIMESTAMPTZ?, fetched_at TIMESTAMPTZ` (not repeated below). `part` is `event_date` unless stated.
+
+| Table (klass, restatement) | Columns | Key |
+|---|---|---|
+| `prices_raw` (joinable, source_error) | `market VARCHAR, stock_id VARCHAR, open DOUBLE?, high DOUBLE?, low DOUBLE?, close DOUBLE?, volume_shares BIGINT, turnover_ntd BIGINT, trades BIGINT` (a no-trade row has null prices and zero volume) | `market, stock_id, event_date` |
+| `price_limits` (joinable, source_error) | `market, stock_id, limit_up DOUBLE?, limit_down DOUBLE?` (null for the no-limit sentinel) | `market, stock_id, event_date` |
+| `shares_issued` (joinable, source_error) | `market, stock_id, isin VARCHAR? (TWSE only), shares_issued BIGINT` | `market, stock_id, event_date` |
+| `market_cap` (derived, none) | `stock_id, close DOUBLE, shares_issued BIGINT, market_cap_ntd DOUBLE` (`available_at` is the latest input) | `stock_id, event_date` |
+| `corporate_actions` (joinable, source_error) | `market, stock_id, action_type VARCHAR (ex_dividend, ex_rights, capital_reduction, split, par_value_change), prev_close DOUBLE?, reference_price DOUBLE?, halt_close DOUBLE?, ratio DOUBLE? (manual rows only), cash_dividend DOUBLE?, stock_dividend_per_1000 DOUBLE?, reduction_reason VARCHAR?` | `market, stock_id, event_date, action_type` |
+| `status_events` (joinable, source_error) | `market, stock_id, status_type VARCHAR (disposition, attention, changed_trading), announce_date DATE?, start_date DATE, end_date DATE?, detail VARCHAR?` (`event_date` is `start_date`) | `market, stock_id, status_type, start_date` |
+| `benchmark_index` (joinable, source_error) | `index_id VARCHAR (TAIEX_TR, TAIWAN50_TR, TPEX_TR), value DOUBLE` | `index_id, event_date` |
+| `monthly_revenue` (joinable, economic) | `stock_id, country VARCHAR, revenue_year BIGINT, revenue_month_num BIGINT, revenue BIGINT, create_time VARCHAR?` (`event_date` is the first day of the revenue month; unit confirmed by S5) | `stock_id, event_date` |
+| `financials` (joinable, economic) | `stock_id, statement VARCHAR (income, balance, cashflow), item VARCHAR, origin_name VARCHAR, value DOUBLE?` (`event_date` is the period end) | `stock_id, event_date, statement, item` |
+| `dividend_announcements` (joinable, economic) | `stock_id` plus the source columns of `TaiwanStockDividend` (`year VARCHAR` and the dividend and date columns exactly as returned). Agent B fixes the full column list from its first live call, records it in `docs/data_dictionary/b_dividends.md`, and registers it. A new column at run time fails closed. (`event_date` is the source `date`, the announcement date) | `stock_id, event_date, year` |
+| `dividend_results` (joinable, source_error) | `stock_id, before_price DOUBLE, after_price DOUBLE, stock_and_cache_dividend DOUBLE, stock_or_cache_dividend VARCHAR, max_price DOUBLE, min_price DOUBLE, open_price DOUBLE, reference_price DOUBLE` (the cross-check source for check 3) | `stock_id, event_date` |
+| `flows_institutional` (joinable, economic) | `stock_id, name VARCHAR, buy BIGINT, sell BIGINT` | `stock_id, event_date, name` |
+| `shareholding` (joinable, source_error) | `stock_id, stock_name, InternationalCode, ForeignInvestmentRemainingShares BIGINT, ForeignInvestmentShares BIGINT, ForeignInvestmentRemainRatio DOUBLE, ForeignInvestmentSharesRatio DOUBLE, ForeignInvestmentUpperLimitRatio DOUBLE, ChineseInvestmentUpperLimitRatio DOUBLE, NumberOfSharesIssued BIGINT, RecentlyDeclareDate VARCHAR?, note VARCHAR?` | `stock_id, event_date` |
+| `margin` (joinable, source_error) | `stock_id, MarginPurchaseBuy, MarginPurchaseCashRepayment, MarginPurchaseLimit, MarginPurchaseSell, MarginPurchaseTodayBalance, MarginPurchaseYesterdayBalance, Note VARCHAR?, OffsetLoanAndShort, ShortSaleBuy, ShortSaleCashRepayment, ShortSaleLimit, ShortSaleSell, ShortSaleTodayBalance, ShortSaleYesterdayBalance` (all BIGINT except `Note`) | `stock_id, event_date` |
+| `short_sale_balances` (joinable, source_error) | `stock_id` plus the columns of `TaiwanDailyShortSaleBalances` (BIGINT, source names). Agent D fixes the list from the first live call and records it; the date column maps to `event_date` | `stock_id, event_date` |
+| `securities_lending` (joinable, source_error) | `stock_id, transaction_type VARCHAR, seq BIGINT (0-based position of the row among rows with the same stock, date and type, in response order), volume BIGINT, fee_rate DOUBLE, close DOUBLE, original_return_date VARCHAR?, original_lending_period BIGINT?` | `stock_id, event_date, transaction_type, seq` |
+| `day_trading` (joinable, source_error) | `stock_id, BuyAfterSale VARCHAR, Volume BIGINT, BuyAmount BIGINT, SellAmount BIGINT` | `stock_id, event_date` |
+| `valuation_ratios` (joinable, economic) | `stock_id, dividend_yield DOUBLE?, PER DOUBLE?, PBR DOUBLE?` | `stock_id, event_date` |
+| `us_prices` (joinable, source_error) | `ticker VARCHAR (the source stock_id, `^VIX` for the VIX), Open DOUBLE, High DOUBLE, Low DOUBLE, Close DOUBLE, Adj_Close DOUBLE, Volume BIGINT` (`Adj_Close` is never a join column) | `ticker, event_date` |
+| `fx` (joinable, source_error) | `currency VARCHAR, cash_buy DOUBLE?, cash_sell DOUBLE?, spot_buy DOUBLE?, spot_sell DOUBLE?` | `currency, event_date` |
+| `rates` (joinable, source_error) | `series VARCHAR (`interest:<country>` or `bond:<name>`), value DOUBLE` | `series, event_date` |
+| `futures_daily` (joinable, source_error) | `futures_id, contract_date VARCHAR, trading_session VARCHAR, open DOUBLE?, max DOUBLE?, min DOUBLE?, close DOUBLE?, spread DOUBLE?, spread_per DOUBLE?, volume BIGINT, settlement_price DOUBLE?, open_interest BIGINT?` | `futures_id, event_date, contract_date, trading_session` |
+| `futures_institutional` (joinable, source_error) | `futures_id, institutional_investors VARCHAR, long_deal_volume BIGINT, long_deal_amount BIGINT, short_deal_volume BIGINT, short_deal_amount BIGINT, long_open_interest_balance_volume BIGINT, long_open_interest_balance_amount BIGINT, short_open_interest_balance_volume BIGINT, short_open_interest_balance_amount BIGINT` | `futures_id, event_date, institutional_investors` |
+| `snapshot_<name>` (joinable, source_error), one per snapshot endpoint | `snapshot_date DATE (from the response body when it has one, otherwise the Taipei date of the fetch, clamped), first_seen_at TIMESTAMPTZ, payload_sha256 VARCHAR, row_json VARCHAR (one source row as JSON)` (`event_date` is `snapshot_date`, `available_at` is `first_seen_at`) | `payload_sha256, snapshot_date` |
+| `trading_calendar` (reference, none) | `is_trading BOOLEAN, source VARCHAR (finmind, stub)` (no `available_at`) | `event_date, source` |
+| `stock_info` (reference, none) | `stock_id, stock_name, industry_category, type VARCHAR` (no `available_at`; `event_date` is the source `date`, meaning unverified, S6) | `stock_id, event_date` |
+| `delistings` (reference, none) | `stock_id, stock_name` (`event_date` is the delisting date) | `stock_id, event_date` |
+| `universe_membership` (derived, none; part `month_end`) | `month_end DATE, stock_id, isin VARCHAR?, market, rank BIGINT? (null for watchlist extras), market_cap_ntd DOUBLE, median_turnover_60d DOUBLE, is_watchlist BOOLEAN, is_benchmark BOOLEAN, available_at TIMESTAMPTZ?` (no `event_date`; `month_end` plays that role) | `month_end, stock_id` |
+| `collection_set` (reference, none; part `first_month_end`) | `stock_id, first_month_end DATE, last_month_end DATE, ever_watchlist BOOLEAN, is_benchmark BOOLEAN` (a list used to choose stocks to fetch, not a feature input) | `stock_id, first_month_end` |
+
+**Storage map.** Every table, including reference and derived ones, is stored under `data/clean/<table>/v<N>/`. The design's `data/reference/` folder is not used (section 14).
+
+**Restatement class and default view.** `economic`: first-seen view by default. `source_error` and `none`: latest-corrected view by default. The classes are in the table above and are recorded in `docs/DECISIONS.md`.
+
+## 8. Clients
+
+All network access goes through these classes. `src/twdata/clients/transport.py`: `HttpResult(status: int, headers: dict[str, str], body: bytes)` and `Transport = Callable[[str, str, dict, dict, float], HttpResult]` (method, url, params, headers, timeout). The default transport uses `requests` with `allow_redirects=False` and `verify=True` (`verify=False` is forbidden), maps any `requests` connection or timeout exception to `HttpResult(0, {}, b"")`, and sends the `User-Agent` from settings. `headers` in `HttpResult` and in classification are **response** headers (a 302 `Location` is read from them). Request headers (the FinMind `Authorization: Bearer`) are passed only to the transport and never stored anywhere.
+
+**`limiter.py`.**
+*   `HostLimiter(host, min_interval_s, lock_path, state_path, now=time.time, sleep=time.sleep)`: `slot()` is a context manager. It takes the file lock, reads the last **completion** time from `state_path`, sleeps until completion plus `min_interval_s` (capped at `min_interval_s` so a wall-clock jump after WSL2 sleep cannot stall the run), holds the lock through the request, then writes the new completion time and releases. So at most one request per host is in flight across all processes.
+*   `QuotaLimiter(limit_per_hour, target_fraction, state_path, lock_path, now, sleep)`: a persisted sliding 3,600 s window. `slot()` sleeps until a request fits under `limit_per_hour * target_fraction`. `update(limit_per_hour, user_count)` applies a fresh user-info reading (called at start-up and every `user_info_refresh_requests` requests).
+
+**`rawcache.py`.** `RawCache(settings, area="raw")`.
+*   `put(source, dataset, request_key, url, params, status, body: bytes, fetched_at)` buffers a response. Only responses classified `ok` are `put`. `drift` responses are written individually to `quarantine_dir`. `transient` responses are not stored.
+*   `request_key = sha256(method + "\n" + url + "\n" + json.dumps(params, sort_keys=True, separators=(",", ":")))` over UTF-8, no credentials.
+*   When the buffer reaches `raw_shard_max_responses` (or on `flush()`), it writes `shard-<UTC yyyymmddThhmmssffffff>-<uuid8>.parquet` atomically (temporary name then rename) with rows `request_key, url, params (JSON text), fetched_at, status, body (binary), body_sha256 (over the bytes)`, and appends one JSON line to `data/state/manifest/<source>/<dataset>.jsonl` (`file`, `rows`, `sha256` of the shard, `first_fetched_at`, `last_fetched_at`).
+*   `get(source, dataset, request_key) -> CachedResponse | None` returns the latest stored `ok` response for the key (reading through the manifest and the in-memory buffer). `CachedResponse(status, body, fetched_at, shard)`.
+*   `verify(source, dataset) -> list[Problem]` reports shards missing or with a wrong sha256, and shard files on disk that the manifest does not list.
+
+**`classifier.py`.** `classify(spec: EndpointSpec, result: HttpResult, *, date=None, calendar=None) -> Result(klass, reason, rows: int)`.
+*   `transient`: status 0, 5xx, 429 (TWSE, TPEx).
+*   `drift`: status 302; any other 4xx from TWSE or TPEx except 429; HTTP 200 with an HTML body or invalid JSON; `stat` present and not equal to `spec.stat_ok` **unless** the body is exactly the known TWSE no-data reply (keys `stat` and `total` only, with `stat` containing 很抱歉 or 查詢無資料) on a `range` or `stock_month` call (then `ok`, empty); a field list that matches no era valid on `date`; zero rows on a `per_date` call for a date inside the calendar that is a trading day; zero rows on a `per_date` call with no calendar coverage for the date.
+*   `ok`: valid JSON with rows; empty for `range`, `snapshot` and `stock_month`; empty for `per_date` on a date inside the calendar that is not a trading day.
+*   Row counts and field lists are read through the spec's `rows_path` and `fields_path` (table selector for `MI_INDEX`).
+
+**`base.py`.** `Client(settings, host, limiter, cache, transport, headers_for=None)`. `fetch(endpoint_key, params, *, date=None, use_cache=True, extra_headers=None) -> Response(klass, rows, body, parsed, from_cache)`.
+1. Cache first: if `use_cache`, `cache.get` by `request_key`; a hit returns without a request.
+2. Otherwise `limiter.slot()` around the transport call, classify, then: `ok` is cached and returned, `drift` is quarantined and raises `DriftError`, `transient` retries following `retry_waits_s` (6 attempts), then `RetryExhausted`.
+3. Row cap: more rows than the applicable `row_caps` entry raises `DriftError`.
+Exceptions: `BlockedError` (FinMind any 4xx other than auth; TWSE or TPEx HTTP 403 or a 4xx burst, meaning 3 consecutive 4xx responses; this check runs before the classifier), `AuthError` (FinMind 400 `TokenIllegal` or 401 or 403 with a permission message), `DriftError`, `RetryExhausted`, `SanityError`, `CalendarRangeError`. CLI exit codes: `BlockedError`, `AuthError`, `RetryExhausted` → 3; `DriftError`, `SanityError` → 4. A TWSE or TPEx 403 is therefore `BlockedError` (exit 3), and every other 4xx (not 429) is `drift` (exit 4).
+
+**`pair.py`.** `fetch_daily_pair(twse_client, tpex_client, d, twse_key, tpex_key, ledger_path)` fetches the TWSE and TPEx per-date endpoints for one date in the same process, TWSE first. It implements the calendar exception: if both return zero rows on a date the calendar calls a trading day, it appends `{"date", "twse_endpoint", "tpex_endpoint", "recorded_at"}` to `data/state/calendar_discrepancy.jsonl`, returns two empty ok responses and continues. If only one is empty, it raises `DriftError`. `status` lists the ledger and the M1 gate reviews it.
+
+**`context.py`.** `build_context(settings, transport=None) -> RunContext(settings, calendar, twse, tpex, finmind, cache, writers)`. It builds the limiters (host paths from `paths`), the caches, the clients and `CleanWriter` factories, loads the calendar when the table exists, and starts `FinMindClient.user_info()` only when `finmind` is requested. Tests pass a fake `transport` (and `settings` with a temporary `data_dir`), so ingest modules run offline.
+
+**`finmind.py`.** `FinMindClient(ctx_parts)` with `user_info() -> QuotaInfo(level: str, limit: int, user_count: int)` (GET `https://api.web.finmindtrade.com/v2/user_info`, response keys `level_title`, `api_request_limit`, `user_count`) and `dataset(name: str, start: date, end: date | None = None, data_id: str | None = None) -> list[dict]` (GET `https://api.finmindtrade.com/api/v4/data`, `start_date` and `end_date` as `YYYY-MM-DD`, `end` inclusive). It reads the token from `os.environ["FINMIND_TOKEN"]` (loaded by `config.load_env` in `cli.py` only), sends `Authorization: Bearer <token>`, caches the response body (never the header), and checks the in-body `status`: any value other than 200 is an error. Mapping: 402 or any other 4xx raises `BlockedError`; HTTP 400 with `TokenIllegal`, 401 or 403 raises `AuthError`; 5xx and network errors are `transient` with the standard retry. A response with more rows than `row_caps` raises `DriftError`. `QuotaLimiter` wraps each call.
+
+**`twse.py`, `tpex.py`.** One method per table row in section 6, each building the request from `ENDPOINTS`, calling `Client.fetch`, and returning the parsed rows as `list[dict]` keyed by the field names plus the `Response`. Methods: TWSE `mi_index, mi_qfiis, twt84u, bwibbu_d, stock_day, twt49u, twtauu, twtawu, punish, notice, openapi`; TPEx `otc, chtm, ex_daily, revivt, disposal, attention, trading_stock, deListed, openapi`.
+
+## 9. Command line, ownership audit and ledgers
+
+**CLI** (`python -m twdata [--data-dir PATH] <command>`; the CLI loads `.env` through `config.load_env` before building clients).
+*   `fetch --dataset NAME --start DATE --end DATE`: dataset discovery imports every module of `twdata.ingest` (via `discover(package="twdata.ingest")`, injectable). A module that fails to import is reported by name on stderr and skipped, and `fetch` for a dataset of a broken module exits 5. Each module exposes `DATASETS: dict[str, Callable[[RunContext, date, date], None]]`. Duplicate dataset names across modules exit 5.
+*   `status [--dataset NAME] [--verify]`: prints completed ranges from `data/state/`, the calendar discrepancy ledger, and a warning when the last snapshot in `data/raw/snapshots/manifest.jsonl` is more than one trading day old. `--verify` runs `RawCache.verify`, checks every state entry's shards exist, and exits 1 on any problem.
+*   `limiter-check`: reads FinMind user-info, prints the limit, the target rate and each host's spacing; exit 0, or 3 on an auth or block error.
+*   `snapshot`, `rebuild-universe --from DATE --to DATE`: section 3.
+Exit codes: 0 success, 1 verification mismatch, 2 usage error, 3 blocked, auth or retries exhausted, 4 drift or sanity error, 5 internal error (any uncaught exception, broken module, module not built yet). No command deletes data.
+
+**`config/ownership.yaml` and `scripts/ownership_audit.py`.** `ownership.yaml` maps each agent (`lead`, `A` to `F`) to explicit globs, where `*` matches within a path segment and `**` matches across segments (the script implements this itself, so the Python version does not matter). Each of agents A to E works on its own git worktree and branch (`git worktree add ../tw0050-wt-<agent> -b agent/<agent>`) so per-agent attribution is exact. `python scripts/ownership_audit.py --agent A --base <rev> --head <rev>` lists `git diff --name-only --no-renames <base>...<head>`, reads `config/ownership.yaml` from `git show <base>:config/ownership.yaml` (so an agent cannot grant itself paths), and exits 1 listing every path outside that agent's globs. It audits committed changes only. Allowed globs: A: `src/twdata/ingest/{stock_info,delistings,daily_official,market_cap,status_events,snapshots,trading_calendar_derived}.py`, `src/twdata/universe/**` (not `__init__.py`), `tests/agent_a/**`, `tests/fixtures/agent_a/**`, `docs/data_dictionary/a_*.md`, `audit/runs/*_agent_a*.md`; B: `corporate_actions`, `dividend_announcements`, `price_limits`, `adjusted`, `benchmark`, `price_crosscheck` modules, `tests/agent_b/**`, `tests/fixtures/agent_b/**`, `docs/data_dictionary/b_*.md`, `audit/runs/*_agent_b*.md`; C: `monthly_revenue`, `financials`, `valuation` modules and the same pattern; D: `flows_institutional`, `shareholding`, `margin`, `securities_lending`, `day_trading`, `short_sale_balances`; E: `us_prices`, `fx`, `rates`, `futures`; F: `src/twdata/validate/**`, `tests/validate/**`, `docs/COVERAGE_REPORT.md`, `docs/QA_FINDINGS.md`, `audit/runs/*_agent_f*.md` (and `data/raw/qa/**`, which git ignores, so it is not audited). The Lead's globs are the explicit list in section 3. Table-to-module map for A: `prices_raw`, `shares_issued` and `price_limits`'s TPEx half are written by `daily_official.py`; B's `price_limits.py` writes `price_limits` for TWSE (`TWT84U`) and merges the TPEx next-day columns from A's raw files; B's `price_crosscheck.py` is the FinMind price pull for check 1; `market_cap`, classification and universe are A's.
+
+**Stopgap snapshot layout (for the M1 import).** `data/raw/snapshots/<name>/<YYYY-MM-DDTHHMMSS Taipei>.json` (raw response body) and `data/raw/snapshots/manifest.jsonl` (`name`, `file`, `fetched_at`, `status`, `bytes`, `sha256`). The M1 `snapshots` module reads these and writes `snapshot_<name>` rows.
+
+## 10. Fixtures (`tests/fixtures/lead/`, each at most 300 KB)
+
+Fixture rule: a fixture keeps the header and fields, the rows needed to show every observed cell format (including the four `MI_INDEX` sign cells, a `--` row and an `X` row), and at most 40 data rows.
+*   **From saved raw responses:** `twse/mi_index_20160601.json`, `twse/mi_qfiis_20220601.json`, `twse/twt84u_20200615.json`, `twse/twt49u_2025_trimmed.json`, `twse/twtauu_2015_2022_trimmed.json`, `twse/twtawu_2020.json`, `twse/stock_day_no_data.json` (the saved no-data reply for 3474 December 2016), `twse/html_error_200.html`, `tpex/otc_20160601.json` (era 1), `tpex/otc_20200601.json` (era 2), `tpex/otc_20250602.json` (era 3), `tpex/ex_daily_2016_trimmed.json`, `tpex/revivt_2015_trimmed.json`, `tpex/chtm_20200615.json`, and snapshot samples from `data/raw/snapshots/`.
+*   **Captured live by the Lead in M0.3 (token run by the Lead, header never stored):** `finmind/price_2330_trimmed.json`, `finmind/user_info.json`, `finmind/month_revenue_2330_trimmed.json`, and one trimmed response per FinMind dataset in section 7.
+*   **Synthetic, labelled `synthetic_` in the file name:** `finmind/synthetic_error_402.json`, `finmind/synthetic_error_400_token.json`, `finmind/synthetic_error_403.json`, `finmind/synthetic_error_429.json`, `tpex/synthetic_redirect_302.txt`, `twse/synthetic_stat_not_ok_trading_day.json`, `twse/synthetic_empty_range.json`, `tpex/synthetic_empty_holiday.json`. These test classification, and no live observation of those replies exists.
+
+## 11. Tests (Lead, `tests/lead/test_<module>.py`; all offline)
+
+*   `timeutil`: ROC forms parse; `"113/02/29"` is 2024-02-29; `"abc"` raises. Friday 2025-06-20 gives next trading day Monday 2025-06-23 (weekend-off calendar), a Lunar New Year gap gives the first day after it, a date past the calendar gives `None`. `avail_revenue`: Saturday 10th gives next Monday 18:00, Tuesday 10th gives that Tuesday 18:00, a 10th past the calendar gives `None`. `avail_financials`: Q3 2020 gives Monday 2020-11-16 08:30, annual 2024 gives the first trading day after 2025-03-31 at 08:30, a `period_end` of 2020-05-31 raises. `avail_us(Friday)` is Saturday 08:30. `avail_announcement` with and without a time. `avail_max` with a `None`. `clamp_snapshot_date`. Where a deadline falls on a trading day it is still strictly after that day.
+*   `parsing`: every case in section 5, including `"- 0.50"`, `"X0.00"`, `"--"`, `clean_name("\t國巨*")`, the four `parse_sign` cells from the fixture, and an unknown cell raising.
+*   `tradingcal`: `next_trading_day`, `CalendarRangeError` outside the range, `load_calendar` union of finmind and stub rows.
+*   `config`, `paths`: missing key raises, `TWDATA_DATA_DIR` and `--data-dir` precedence, `.env` loader formats and no value logging, paths resolve from the repo root.
+*   `state`: merge of adjacent ranges, atomic write (a simulated crash leaves the old file), `missing` against a calendar.
+*   `limiter`: two real processes with a 0.2 s interval never overlap requests (a shared timestamp file records start and end), the sleep cap holds after a clock jump, `QuotaLimiter` stays at 85% of 600 in any window.
+*   `rawcache`: a shard is written at 25 buffered responses; an interrupted write leaves no shard and no manifest line; `verify` reports a sha256 mismatch and an unlisted shard; the stored rows contain no `Authorization` header or token (the test sets a fake token and greps the shard bytes); `qa` area writes under `data/raw/qa/`.
+*   `classifier`: every branch in section 8 with the fixtures (HTML 200, stat not OK on a trading day, TPEx lowercase `ok`, the known no-data reply on a range, an empty holiday, 302, 403, 429, 500, a field list outside every era, `MI_INDEX` table selection).
+*   `base`, `pair`, `finmind`: cache-first returns without a request, six attempts with the configured waits then `RetryExhausted`, `DriftError` quarantines, `BlockedError` on a 3-in-a-row 4xx, the daily pair records a ledger line when both are empty and raises when only one is, FinMind 400 `TokenIllegal`, 401, 402, 403 and 429 each stop with the right exception, the in-body `status`, the row cap, `user_info` updates the quota limiter, the header is added at the transport only.
+*   `endpoints`: request construction (URL, params, date format) for every row of section 6.
+*   `schema`, `cleanstore`, `views`: every table in section 7 has a valid key and part column; a duplicate key in a batch fails; a rerun with identical rows writes nothing; a changed value writes one run file and the first-seen and latest-corrected views differ; a pending `available_at` filled later is a fill and `as_first_seen` takes the filled value and `revisions` stays empty; a revision row's `available_at` is `max(available_at, fetched_at)`; `available_at < event_date` raises; two appends in the same second write distinct files; `set_current` requires an existing version; the views use the current version only.
+*   `sanity`: high below low, close outside the range, negative price raise; `tick_size` table.
+*   `cli`: exit codes 0, 1, 2, 3, 4, 5; discovery with an injected package that has a good module, a broken module and a duplicate name; `.env` loaded before clients.
+*   `ownership_audit`: a path outside the agent's globs exits 1; the base `ownership.yaml` is used, not the head's; `**` and `*` matching.
+*   `no_http_imports`: no module under `src/` outside `src/twdata/clients/` imports `requests`, `urllib.request`, `http.client` or `socket`.
+
+## 12. Calendar, stub and live gate
+
+*   **Calendar ingest (`src/twdata/ingest/calendar_ingest.py`, Lead):** `refresh_calendar(ctx)` reads FinMind `TaiwanStockTradingDate` for 2015-06-01 to today and writes `trading_calendar` rows `(event_date, is_trading=True, source="finmind")`.
+*   **Stub (`scripts/calendar_stub.py`, Lead):** for each weekday from 2015-03-02 to 2015-05-29 (65 weekdays), request TWSE `mi_index` and TPEx `otc` through the standard clients with `kind` treated as exploratory (an empty reply is allowed). If both return zero rows the day is a holiday, otherwise it is a trading day. It writes `trading_calendar` rows with `source="stub"` (`is_trading` true or false) and its 130 responses go to the raw cache like any others. Result: 65 weekdays, 130 requests.
+*   **0050 split entry:** `config/manual_corporate_actions.yaml` has one entry at M0: `market: TWSE, stock_id: "0050", action_type: split, event_date: 2025-06-18, ratio: 4, halt_close: 188.65, reference_price: null, source: "FinMind price gap 2025-06-11 to 2025-06-17, official announcement pending (S11)", entered_by: Lead, entered_on: 2026-11-14`. `halt_close` is the 2025-06-10 FinMind close and is confirmed against the TWSE `STOCK_DAY` response. A null `reference_price` means the factor falls back to `1/ratio` (marked `source=estimated` in the data dictionary) and blocks the final M0 live gate until the announcement is found. Agent B's `corporate_actions` module reads this file: `prev_close = halt_close`, factor `reference_price/halt_close`, or `1/ratio` when `reference_price` is null.
+*   **Watchlist (`config/watchlist.yaml`):** a list of `{stock_id, start_date, reason, added_on}`. It ships as an empty list `[]`. 0050 is the benchmark, not a watchlist name.
+
+## 13. M0 work order and gates
+
+1. **M0.1 contract layer** (Lead): `pyproject.toml`, `config/`, `config.py`, `paths.py`, `timeutil.py`, `parsing.py`, `tradingcal.py`, `schema.py`, `endpoints.py`, `state.py`, `sanity.py` and their tests. Gate: `ruff check`, `ruff format --check`, `pytest` pass.
+2. **M0.2 storage and limiter** (builder A: `cleanstore.py`, `views.py`; builder B: `limiter.py`, `rawcache.py`; in parallel after M0.1, each in its own worktree) and their tests. Gate: same.
+3. **M0.3 clients** (builder C: `transport`, `classifier`, `base`, `pair`, `context`, `finmind`, `twse`, `tpex`; builder D: `tests/fixtures/lead/**` and fixture-based tests) after M0.2. Gate: same, plus the fixture list complete and the era tuples checked against the fixtures.
+4. **M0.4** (Lead): `cli.py`, `scripts/ownership_audit.py`, `scripts/calendar_stub.py`, `calendar_ingest.py`, the spike scripts for S10 to S12, `docs/specs/acceptance_checks.md` extracted from the design, and the specs for agents A to F. Then the live steps (calendar load, stub run, S10 to S12 results). Gate: the design's M0 gates.
+Builders A to D use the Lead's ownership model: each owns exactly the paths named, works in a worktree on a branch, ends with a run report in `audit/runs/`, and the Lead runs the ownership audit before merging.
+
+## 14. Deviations from the design (recorded in `docs/DECISIONS.md`)
+
+1. `data/reference/` is not used; reference and derived tables live under `data/clean/` (section 7).
+2. `raw_shard_max_responses` is 25, which bounds crash loss to about 2 minutes of requests (the design leaves the value to config).
+3. `price_limits` is a table of its own, its key matches `prices_raw`.
+4. The adjusted-close continuity test for 0050 moves from the M0 live gate to agent B's M2 gate, since the adjusted view is B's code. The M0 live gate keeps the sourced `reference_price`.
+5. The retry loop is custom, not `urllib3.Retry`, so the limiter and cache stay in the request path.
+6. Agent fixtures live in `tests/fixtures/agent_<x>/` (agents add fixtures for their own modules), the Lead captures the client fixtures.
+7. `short_sale_balances`, `dividend_announcements` have their exact column lists fixed from a first live call by agents D and B and recorded in the dictionary, with a fail-closed check for new columns.

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "twdata"
+version = "0.1.0"
+description = "Taiwan stock data platform (phase 1: data collection)"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "pyarrow",
+    "duckdb",
+    "requests",
+    "pyyaml",
+    "filelock",
+    "tzdata",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[project.scripts]
+twdata = "twdata.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["twdata"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E501"]

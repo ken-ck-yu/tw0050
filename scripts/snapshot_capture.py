@@ -11,11 +11,11 @@ Rules it follows: public endpoints only, no token, one request in flight, at lea
 Output: data/raw/snapshots/<name>/<YYYY-MM-DDTHHMMSS>.json (Asia/Taipei time) and one
 line per file in data/raw/snapshots/manifest.jsonl with its sha256. data/ is gitignored.
 """
+
 import datetime
 import hashlib
 import json
 import os
-import sys
 import time
 import urllib.request
 import zoneinfo
@@ -72,8 +72,14 @@ def main():
         else:
             with open(path, "wb") as f:
                 f.write(body)
-            line = {"name": name, "file": os.path.relpath(path, ROOT), "fetched_at": stamp,
-                    "status": status, "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
+            line = {
+                "name": name,
+                "file": os.path.relpath(path, ROOT),
+                "fetched_at": stamp,
+                "status": status,
+                "bytes": len(body),
+                "sha256": hashlib.sha256(body).hexdigest(),
+            }
             with open(os.path.join(ROOT, "manifest.jsonl"), "a") as m:
                 m.write(json.dumps(line) + "\n")
             saved += 1

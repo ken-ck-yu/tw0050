@@ -1,0 +1,12 @@
+# Splits and par-value changes that no official feed carries (spike S8).
+# reference_price null: the factor falls back to 1/ratio until the exchange announcement is sourced (S11).
+- market: TWSE
+  stock_id: "0050"
+  action_type: split
+  event_date: 2025-06-18
+  ratio: 4
+  halt_close: 188.65
+  reference_price: null
+  source: "FinMind price gap 2025-06-11 to 2025-06-17; official announcement pending (S11)"
+  entered_by: Lead
+  entered_on: 2026-11-14
