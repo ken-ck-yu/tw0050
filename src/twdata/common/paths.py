@@ -36,8 +36,12 @@ def state_file(s: Settings, dataset: str) -> Path:
     return s.data_dir / "state" / f"{dataset}.json"
 
 
-def manifest_file(s: Settings, source: str, dataset: str) -> Path:
-    return s.data_dir / "state" / "manifest" / source / f"{dataset}.jsonl"
+def manifest_file(s: Settings, source: str, dataset: str, area: str = "raw") -> Path:
+    if area == "raw":
+        return s.data_dir / "state" / "manifest" / source / f"{dataset}.jsonl"
+    if area == "qa":
+        return s.data_dir / "state" / "manifest" / "qa" / source / f"{dataset}.jsonl"
+    raise ValueError(f"unknown area {area!r}")
 
 
 def host_lock_file(s: Settings, host: str) -> Path:

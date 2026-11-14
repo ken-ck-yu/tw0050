@@ -1,0 +1,124 @@
+# Allowed paths per agent. `*` matches within a path segment, `**` across segments.
+# Audited by scripts/ownership_audit.py from the base commit's copy of this file.
+lead:
+  - pyproject.toml
+  - requirements.lock
+  - config/**
+  - src/twdata/__init__.py
+  - src/twdata/__main__.py
+  - src/twdata/cli.py
+  - src/twdata/common/**
+  - src/twdata/clients/**
+  - src/twdata/ingest/__init__.py
+  - src/twdata/ingest/calendar_ingest.py
+  - src/twdata/universe/__init__.py
+  - scripts/**
+  - tests/conftest.py
+  - tests/lead/**
+  - tests/fixtures/lead/**
+  - docs/specs/**
+  - docs/spikes/**
+  - docs/reviews/**
+  - docs/research/**
+  - docs/amendments/**
+  - docs/designs/**
+  - docs/DATA_DICTIONARY.md
+  - docs/DECISIONS.md
+  - docs/ITERATION_LOG.md
+  - docs/FINMIND_DATASETS.md
+  - docs/OFFICIAL_SOURCES.md
+  - audit/runs/*_lead*.md
+  - audit/runs/*_builder_*.md
+  - audit/runs/*_probe-*.md
+  - audit/runs/*_spike-*.md
+  - .gitignore
+  - .pre-commit-config.yaml
+  - CLAUDE.md
+builder_a:
+  - src/twdata/common/cleanstore.py
+  - src/twdata/common/views.py
+  - tests/lead/test_cleanstore.py
+  - tests/lead/test_views.py
+  - audit/runs/2026-11-14_builder_a.md
+builder_b:
+  - src/twdata/clients/limiter.py
+  - src/twdata/clients/rawcache.py
+  - tests/lead/test_limiter.py
+  - tests/lead/test_rawcache.py
+  - audit/runs/2026-11-14_builder_b.md
+builder_c:
+  - src/twdata/clients/transport.py
+  - src/twdata/clients/classifier.py
+  - src/twdata/clients/base.py
+  - src/twdata/clients/pair.py
+  - src/twdata/clients/context.py
+  - src/twdata/clients/finmind.py
+  - src/twdata/clients/twse.py
+  - src/twdata/clients/tpex.py
+  - tests/lead/test_classifier.py
+  - tests/lead/test_base.py
+  - tests/lead/test_pair.py
+  - tests/lead/test_finmind.py
+  - tests/lead/test_twse_tpex.py
+  - tests/lead/fixtures_inline.py
+  - audit/runs/2026-11-14_builder_c.md
+A:
+  - src/twdata/ingest/stock_info.py
+  - src/twdata/ingest/delistings.py
+  - src/twdata/ingest/daily_official.py
+  - src/twdata/ingest/market_cap.py
+  - src/twdata/ingest/status_events.py
+  - src/twdata/ingest/snapshots.py
+  - src/twdata/ingest/trading_calendar_derived.py
+  - src/twdata/universe/classify.py
+  - src/twdata/universe/build.py
+  - tests/agent_a/**
+  - tests/fixtures/agent_a/**
+  - docs/data_dictionary/a_*.md
+  - audit/runs/*_agent_a_*.md
+B:
+  - src/twdata/ingest/corporate_actions.py
+  - src/twdata/ingest/dividend_announcements.py
+  - src/twdata/ingest/dividend_results.py
+  - src/twdata/ingest/price_limits.py
+  - src/twdata/ingest/adjusted.py
+  - src/twdata/ingest/benchmark.py
+  - src/twdata/ingest/price_crosscheck.py
+  - tests/agent_b/**
+  - tests/fixtures/agent_b/**
+  - docs/data_dictionary/b_*.md
+  - audit/runs/*_agent_b_*.md
+C:
+  - src/twdata/ingest/monthly_revenue.py
+  - src/twdata/ingest/financials.py
+  - src/twdata/ingest/valuation.py
+  - tests/agent_c/**
+  - tests/fixtures/agent_c/**
+  - docs/data_dictionary/c_*.md
+  - audit/runs/*_agent_c_*.md
+D:
+  - src/twdata/ingest/flows_institutional.py
+  - src/twdata/ingest/shareholding.py
+  - src/twdata/ingest/margin.py
+  - src/twdata/ingest/securities_lending.py
+  - src/twdata/ingest/day_trading.py
+  - src/twdata/ingest/short_sale_balances.py
+  - tests/agent_d/**
+  - tests/fixtures/agent_d/**
+  - docs/data_dictionary/d_*.md
+  - audit/runs/*_agent_d_*.md
+E:
+  - src/twdata/ingest/us_prices.py
+  - src/twdata/ingest/fx.py
+  - src/twdata/ingest/rates.py
+  - src/twdata/ingest/futures.py
+  - tests/agent_e/**
+  - tests/fixtures/agent_e/**
+  - docs/data_dictionary/e_*.md
+  - audit/runs/*_agent_e_*.md
+F:
+  - src/twdata/validate/**
+  - tests/validate/**
+  - docs/COVERAGE_REPORT.md
+  - docs/QA_FINDINGS.md
+  - audit/runs/*_agent_f_*.md

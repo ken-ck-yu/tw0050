@@ -199,6 +199,40 @@ _joinable(
     "futures_id,event_date,institutional_investors",
     "source_error",
 )
+_joinable(
+    "dividend_announcements",
+    "stock_id:VARCHAR, source_date:VARCHAR, year:VARCHAR, "
+    "StockEarningsDistribution:DOUBLE?, StockStatutorySurplus:DOUBLE?, "
+    "StockExDividendTradingDate:VARCHAR?, TotalEmployeeStockDividend:DOUBLE?, "
+    "TotalEmployeeStockDividendAmount:DOUBLE?, RatioOfEmployeeStockDividendOfTotal:DOUBLE?, "
+    "RatioOfEmployeeStockDividend:DOUBLE?, CashEarningsDistribution:DOUBLE?, "
+    "CashStatutorySurplus:DOUBLE?, CashExDividendTradingDate:VARCHAR?, "
+    "CashDividendPaymentDate:VARCHAR?, TotalEmployeeCashDividend:DOUBLE?, "
+    "TotalNumberOfCashCapitalIncrease:DOUBLE?, CashIncreaseSubscriptionRate:DOUBLE?, "
+    "CashIncreaseSubscriptionpRrice:DOUBLE?, RemunerationOfDirectorsAndSupervisors:DOUBLE?, "
+    "ParticipateDistributionOfTotalShares:DOUBLE?, AnnouncementTime:VARCHAR?",
+    "stock_id,event_date,year",
+    "economic",
+)
+_joinable(
+    "short_sale_balances",
+    "stock_id:VARCHAR, MarginShortSalesPreviousDayBalance:BIGINT, "
+    "MarginShortSalesShortSales:BIGINT, MarginShortSalesShortCovering:BIGINT, "
+    "MarginShortSalesStockRedemption:BIGINT, MarginShortSalesCurrentDayBalance:BIGINT, "
+    "MarginShortSalesQuota:BIGINT, SBLShortSalesPreviousDayBalance:BIGINT, "
+    "SBLShortSalesShortSales:BIGINT, SBLShortSalesReturns:BIGINT, "
+    "SBLShortSalesAdjustments:BIGINT, SBLShortSalesCurrentDayBalance:BIGINT, "
+    "SBLShortSalesQuota:BIGINT, SBLShortSalesShortCovering:BIGINT",
+    "stock_id,event_date",
+    "source_error",
+)
+_joinable(
+    "finmind_prices",
+    "stock_id:VARCHAR, Trading_Volume:BIGINT, Trading_money:BIGINT, open:DOUBLE?, max:DOUBLE?, "
+    "min:DOUBLE?, close:DOUBLE?, spread:DOUBLE?, Trading_turnover:BIGINT",
+    "stock_id,event_date",
+    "source_error",
+)
 _other("trading_calendar", "is_trading:BOOLEAN, source:VARCHAR", "event_date,source", "reference")
 _other(
     "stock_info",
@@ -266,6 +300,7 @@ def snapshot_table(name: str) -> Table:
             "snapshot_date": "DATE",
             "first_seen_at": "TIMESTAMPTZ",
             "payload_sha256": "VARCHAR",
+            "row_seq": "BIGINT",
             "row_json": "VARCHAR",
         }
     )
@@ -273,7 +308,7 @@ def snapshot_table(name: str) -> Table:
         Table(
             tname,
             cols,
-            ("payload_sha256", "snapshot_date", "row_json"),
+            ("payload_sha256", "snapshot_date", "row_seq"),
             "event_date",
             "joinable",
             "source_error",
