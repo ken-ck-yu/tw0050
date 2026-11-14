@@ -22,11 +22,11 @@ def main() -> int:
     d = START
     while d <= END:
         if d.weekday() < 5:
-            tw = ctx.twse.mi_index(d, allow_empty=True)
-            tp = ctx.tpex.otc(d, allow_empty=True)
-            trading = bool(tw.rows) or bool(tp.rows)
+            tw_rows, _ = ctx.twse.mi_index(d, allow_empty=True)
+            tp_rows, _ = ctx.tpex.otc(d, allow_empty=True)
+            trading = bool(tw_rows) or bool(tp_rows)
             rows.append({"event_date": d, "is_trading": trading, "source": "stub"})
-            print(d, "trading" if trading else "holiday", len(tw.rows), len(tp.rows), flush=True)
+            print(d, "trading" if trading else "holiday", len(tw_rows), len(tp_rows), flush=True)
         d += timedelta(days=1)
     ctx.cache.flush()
     ctx.writers("trading_calendar").append(rows, datetime.now(UTC))

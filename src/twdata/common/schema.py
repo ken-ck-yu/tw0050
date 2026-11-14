@@ -65,8 +65,8 @@ def _other(name, cols, key, klass, part="event_date"):
 
 _joinable(
     "prices_raw",
-    "market:VARCHAR, stock_id:VARCHAR, open:DOUBLE?, high:DOUBLE?, low:DOUBLE?, "
-    "close:DOUBLE?, volume_shares:BIGINT, turnover_ntd:BIGINT, trades:BIGINT",
+    "market:VARCHAR, stock_id:VARCHAR, stock_name:VARCHAR, open:DOUBLE?, high:DOUBLE?, "
+    "low:DOUBLE?, close:DOUBLE?, volume_shares:BIGINT, turnover_ntd:BIGINT, trades:BIGINT",
     "market,stock_id,event_date",
     "source_error",
 )

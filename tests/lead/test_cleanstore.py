@@ -182,6 +182,7 @@ def test_bigint_and_nullable_types(tmp_path):
         "available_at": None,
         "market": "TWSE",
         "stock_id": "2330",
+        "stock_name": "台積電",
         "open": None,
         "high": None,
         "low": None,
