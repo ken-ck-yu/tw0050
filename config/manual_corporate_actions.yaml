@@ -7,6 +7,10 @@
   ratio: 4
   halt_close: 188.65
   reference_price: null
-  source: "FinMind price gap 2025-06-11 to 2025-06-17; official announcement pending (S11)"
+  # For a split the adjustment factor is exactly 1/ratio (a split changes no one's wealth).
+  # reference_price is informational only: press gives 47.32 (finance.technews.tw 2025-06-17,
+  # Yuanta NAV-based) and 47.16 (money.udn.com 2026-05-25, no source); neither is an exchange
+  # document, and the exchange announcement was not found. It does not affect any return.
+  source: "FinMind price gap 2025-06-11 to 2025-06-17; ratio 4 from the 1-for-4 split press reports"
   entered_by: Lead
   entered_on: 2026-11-14

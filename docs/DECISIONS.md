@@ -119,3 +119,8 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 - **Still forbidden (rule 2):** displaying, printing, logging, caching or committing the token or any request header, and any command whose output could show it (for example `env`, `printenv`, `cat .env`, `set -x`). Scripts print only whitelisted, non-secret fields. The Lead does not pass the token to subagents. FinMind runs are started by the Lead only.
 - **Free tier only:** any 402 or other 4xx stops the FinMind run and is reported. No paid tier is ever selected. The limiter keeps to 85% of the live user-info limit.
 - **Effect:** the FinMind steps (calendar, stock info, delistings, monthly revenue and the other per-stock datasets) no longer wait for Ken, so the first test result can come overnight.
+
+## 2026-11-14: split factor and 0050 reference price (Lead; open to Ken's override)
+
+- For `split` and `par_value_change` entries the adjustment factor is exactly `1/ratio`. The 0050 resumption reference price was searched: press gives 47.32 (finance.technews.tw, 2025-06-17, Yuanta NAV-based) and 47.16 (money.udn.com, 2026-05-25, unsourced); no exchange announcement was found. Using either as `reference_price/halt_close` would put a 0.3% error into the benchmark's adjusted return, so the reference price is informational only. The ratio of 4 rests on FinMind's price gap (188.65 on 2025-06-10, 47.57 on 2025-06-18, halt 2025-06-11 to 2025-06-17) and on the press reports of the 1-for-4 split. Rejected: gating M0 on an official reference price.
+- Round 2 clarifications (TPEx `----` and ex-date text, the real TWSE holiday reply shape, `status_events.event_date`, `prices_raw.stock_name`, OpenAPI cache bypass) are in `docs/specs/m0_specs.md` section 17.

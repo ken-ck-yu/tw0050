@@ -300,3 +300,13 @@ Builders A to D use the Lead's ownership model: each owns exactly the paths name
 
 8. The `as_latest_corrected` view applies the revision `available_at` rule (item 3).
 9. Column changes against the design's schema table: `monthly_revenue` (`revenue`, `revenue_year`, `revenue_month_num`), `dividend_announcements` (key `stock_id, event_date, year`, `source_date`), `flows_institutional` (`name`, no `net`), `stock_info` (`type`), `securities_lending` (`seq`), `us_prices` (source names), `valuation_ratios` classed `economic`, new tables `dividend_results`, `finmind_prices`, `short_sale_balances`, `futures_daily`, `futures_institutional`, `rates`.
+
+## 17. Revision 4 clarifications (2026-11-14)
+
+18. **Split factor.** For `split` and `par_value_change` rows the adjustment factor is exactly `1/ratio`, never `reference_price/prev_close`. The 0050 entry's `reference_price` stays informational: press gives 47.32 and 47.16 and no exchange document was found. This replaces the M0 live-gate condition of a sourced `reference_price` (section 12) with: the entry exists with `ratio: 4` and the factor test passes.
+19. **TPEx cells.** `parse_number` treats any run of two or more dashes as empty (`----` no-trade rows). `parse_tpex_change` returns `(value, ex_flag)` and accepts `除息`, `除權`, `除權息`.
+20. **TWSE holiday reply.** The real reply is `{"stat": "很抱歉，沒有符合條件的資料!", "type": "ALLBUT0999"}` (observed 2025-10-10). The classifier treats any stat message containing `很抱歉` or `查詢無資料` with no `data` and no `tables` key as the no-data reply, and `allow_empty=True` accepts it on any per-date call.
+21. **`status_events.event_date`.** It is `announce_date` when present, otherwise `start_date`, so `available_at >= event_date` holds for notices announced before their window starts. Window coverage uses `start_date` and `end_date`.
+22. **`prices_raw.stock_name`.** `prices_raw` carries the cleaned stock name (needed to detect depositary receipts).
+23. **OpenAPI calls bypass the cache by default** (`use_cache=False`), because they show only the latest state.
+24. **`monthly_revenue.revenue_month`** keeps the source name (`revenue_month_num` in section 7 is superseded).
