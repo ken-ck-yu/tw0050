@@ -119,6 +119,8 @@ def classify(
         return Result("drift", "http 302 redirect")
     if st != 200:
         return Result("drift", f"http {st}")
+    if spec.host in ("twse", "tpex") and "網站維護中".encode() in result.body[:4096]:
+        return Result("transient", "site maintenance page")
     try:
         parsed = decode_json(result.body)
     except ValueError as e:
