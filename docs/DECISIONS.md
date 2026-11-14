@@ -140,3 +140,12 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 - **Why:** the author wants recent market conditions in development and a holdout of almost a year. The old date came from the early lane's proposed dates and was not derived from anything.
 - **Timing:** made before any strategy produced a result, so the date was not chosen using results. The evaluator reads the date from settings, so `research/EVALUATOR_SHA256` is unchanged.
 - **Work:** collect `daily_official` and `status_events` for 2024-07-01 to 2025-12-31, then market cap, universe and `monthly_revenue` through 2025-12-31. Nothing after 2025-12-31 goes into `data/research/`.
+
+## 2026-11-14: QA early-lane gate result and triage (Lead)
+
+- **Result:** not passed (`audit/runs/2026-11-14_qa_early_lane_gate.md`). Main cause: universe, market cap and `monthly_revenue` still end at 2024-06 or 2024-05, while the dev window ends 2025-12-31. Prices end 2025-12-22.
+- **QA check 2 (stock_info duplicates) is a false failure:** the key includes `industry_category` since S6, so the 616 repeated (stock_id, event_date) pairs are distinct keys. The QA brief used the old key.
+- **Revenue unit (QA check 16): NT$, not thousands.** Stored 2330 revenue is 236,021,112,000 for 2024-04 and 229,620,372,000 for 2024-05, which equal TSMC's published monthly revenue (NT$236.02B and NT$229.62B). This is an offline confirmation. The live S5 `check_unit` call against `t187ap05_L` is not run yet; the feed only shows the latest month.
+- **Interior revenue gaps (QA check 15):** 4 stocks. 6526 starts 2015-04 but is missing 56 months (probably listed later; not a data loss to chase). 5264, 8406 and 6452 are each missing 10 months. Not fixable offline; logged as known gaps.
+- **Price coverage below 99% (QA check 10):** 38 of 21,909 member-months, not investigated. Needs the network to tell halts from source gaps. Open question for the author: should the rule exempt halted days?
+- **Not done, needs the author's approval (uses FinMind quota):** extend `daily_official`, `status_events`, market cap, universe and `monthly_revenue` through 2025-12-31.
