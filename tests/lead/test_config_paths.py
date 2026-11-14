@@ -65,6 +65,6 @@ def test_research_settings():
     from datetime import date
 
     s = config.load_settings()
-    assert s.research.dev_end == date(2024, 6, 30)
+    assert s.research.dev_end == date(2025, 12, 31)
     assert s.research.train_end == date(2021, 12, 31)
     assert s.research.max_runs_per_cycle == 10

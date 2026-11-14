@@ -133,3 +133,10 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 
 - Stage 1 (first year, 2015-03-02 to 2016-03-31) and the development window (2016-04-01 to 2024-06-30) run as separate `daily_official` and `status_events` processes. The host limiters (one request in flight per host, 5 s apart) serialise them safely, so the hosts stay busy. The post-development period (2024-07-01 to now, the sealed holdout and recent data) is collected after the first test result.
 - Era smoke tests passed before the long run: TPEx layout change 2020-04-29 and 2020-04-30, 2024-06-27 and 2024-06-28, and the 2025 relabel 2025-01-09 and 2025-01-10.
+
+## 2026-11-14: development window extended to 2025-12-31; holdout starts 2026-01-01 (author decision)
+
+- **What:** `research.dev_end` moves from 2024-06-30 to 2025-12-31. Validation becomes 2022-01 to 2025-12; train is unchanged. The sealed holdout is 2026-01-01 to the latest date, about 10 months at this date.
+- **Why:** the author wants recent market conditions in development and a holdout of almost a year. The old date came from the early lane's proposed dates and was not derived from anything.
+- **Timing:** made before any strategy produced a result, so the date was not chosen using results. The evaluator reads the date from settings, so `research/EVALUATOR_SHA256` is unchanged.
+- **Work:** collect `daily_official` and `status_events` for 2024-07-01 to 2025-12-31, then market cap, universe and `monthly_revenue` through 2025-12-31. Nothing after 2025-12-31 goes into `data/research/`.
