@@ -128,3 +128,8 @@ Evidence is in `docs/OFFICIAL_SOURCES.md` and `docs/research/`. Each item below 
 ## 2026-11-14: S6 resolved: stock_info key (Lead)
 
 - `stock_info` key is `stock_id, event_date, industry_category` (FinMind lists a stock once per industry category). Details in `docs/spikes/S6.md`.
+
+## 2026-11-14: staged collection plan for the overnight run (Lead)
+
+- Stage 1 (first year, 2015-03-02 to 2016-03-31) and the development window (2016-04-01 to 2024-06-30) run as separate `daily_official` and `status_events` processes. The host limiters (one request in flight per host, 5 s apart) serialise them safely, so the hosts stay busy. The post-development period (2024-07-01 to now, the sealed holdout and recent data) is collected after the first test result.
+- Era smoke tests passed before the long run: TPEx layout change 2020-04-29 and 2020-04-30, 2024-06-27 and 2024-06-28, and the 2025 relabel 2025-01-09 and 2025-01-10.
