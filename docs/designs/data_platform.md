@@ -271,7 +271,7 @@ A null market cap makes a stock ineligible and is counted and reported per month
 |---|---|---|
 | `src/twdata/common/` | time rules, parsing, trading calendar, schema registry, paths, config | Lead |
 | `src/twdata/clients/` | limiter, raw cache, response classifier, FinMind, TWSE and TPEx clients | Lead |
-| `src/twdata/cli.py`, `config/`, `scripts/spikes/`, `docs/specs/`, `docs/spikes/`, `docs/DATA_DICTIONARY.md` (index) | command line, settings, spike scripts and logs, Phase 0 specs, dictionary index | Lead |
+| `src/twdata/cli.py`, `config/`, `scripts/spikes/`, `docs/specs/`, `docs/spikes/`, `docs/DATA_DICTIONARY.md` (index) | command line, settings, spike scripts and logs, M0 specs, dictionary index | Lead |
 | `src/twdata/ingest/` and `src/twdata/universe/`, group A | trading calendar, stock info, delistings, official daily files, market cap, status events, snapshots, classification, monthly universe | Agent A |
 | `src/twdata/ingest/`, group B | corporate actions, dividend announcements, adjusted-price view, benchmark, FinMind price pull | Agent B |
 | `src/twdata/ingest/`, groups C, D, E | fundamentals; flows and positioning; macro and US | Agents C, D, E |
@@ -319,7 +319,7 @@ Each entry uses the same template and the numbering of the decisions table.
 
 **D4. Clean writes.**
 *   **Upsert by rewriting year partitions:** overwrites collected data. Not chosen.
-*   **Chosen:** append-only runs with two views. A lighter alternative is disposable clean tables rebuilt from immutable raw, appending only for restatement-class tables. Not chosen here, and can be revisited in the Phase 0 specs.
+*   **Chosen:** append-only runs with two views. A lighter alternative is disposable clean tables rebuilt from immutable raw, appending only for restatement-class tables. Not chosen here, and can be revisited in the M0 specs.
 
 **D5. Shares issued for TWSE.** `MI_QFIIS` (chosen, official, dated, includes later-delisted stocks) against FinMind `TaiwanStockShareholding` (no row for 3299, continues 19 months past 2475's last trade). FinMind is the cross-check.
 
@@ -331,7 +331,7 @@ Each entry uses the same template and the numbering of the decisions table.
 
 **D9. Snapshot job.** All 15 endpoints, run by hand (chosen, author). Not chosen: only sources with a named consumer, and a cron or systemd timer (a WSL2 machine sleeps).
 
-**Other.** A paid FinMind tier and a database server were rejected earlier by the author (`docs/DECISIONS.md`, plan section 5). Yahoo `Adj Close` was dropped as a cross-check: it has no client, and its Taiwan adjustments are unverified. `requests` with `urllib3.Retry` handles retries. No standard package gives a per-host cross-process spacing lock, so the limiter is small custom code. FinMind is called by REST, not the `FinMind` package, so request headers stay under this project's control. `pandas` is dropped because DuckDB and `pyarrow` cover table work. These library choices are the Lead's, and the Phase 0 specs list the dependencies.
+**Other.** A paid FinMind tier and a database server were rejected earlier by the author (`docs/DECISIONS.md`, plan section 5). Yahoo `Adj Close` was dropped as a cross-check: it has no client, and its Taiwan adjustments are unverified. `requests` with `urllib3.Retry` handles retries. No standard package gives a per-host cross-process spacing lock, so the limiter is small custom code. FinMind is called by REST, not the `FinMind` package, so request headers stay under this project's control. `pandas` is dropped because DuckDB and `pyarrow` cover table work. These library choices are the Lead's, and the M0 specs list the dependencies.
 
 ## Non-Functional Requirements
 
