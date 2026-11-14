@@ -1,0 +1,36 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "country": "FED",
+   "date": "2025-01-29",
+   "full_country_name": "Federal Reserve",
+   "interest_rate": 4.5
+  },
+  {
+   "country": "FED",
+   "date": "2025-03-19",
+   "full_country_name": "Federal Reserve",
+   "interest_rate": 4.5
+  },
+  {
+   "country": "FED",
+   "date": "2025-05-07",
+   "full_country_name": "Federal Reserve",
+   "interest_rate": 4.5
+  },
+  {
+   "country": "FED",
+   "date": "2025-06-18",
+   "full_country_name": "Federal Reserve",
+   "interest_rate": 4.5
+  },
+  {
+   "country": "FED",
+   "date": "2025-07-30",
+   "full_country_name": "Federal Reserve",
+   "interest_rate": 4.5
+  }
+ ]
+}

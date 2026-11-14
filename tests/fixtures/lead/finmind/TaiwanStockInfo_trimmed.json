@@ -1,0 +1,41 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "industry_category": "電腦及週邊設備業",
+   "stock_id": "5450",
+   "stock_name": "寶聯通",
+   "type": "tpex",
+   "date": "2020-06-03"
+  },
+  {
+   "industry_category": "電子零組件業",
+   "stock_id": "5481",
+   "stock_name": "新華",
+   "type": "tpex",
+   "date": "2020-06-03"
+  },
+  {
+   "industry_category": "文化創意業",
+   "stock_id": "3687",
+   "stock_name": "歐買尬",
+   "type": "tpex",
+   "date": "2020-06-03"
+  },
+  {
+   "industry_category": "光電業",
+   "stock_id": "3629",
+   "stock_name": "地心引力",
+   "type": "tpex",
+   "date": "2020-06-03"
+  },
+  {
+   "industry_category": "其他電子類",
+   "stock_id": "6238",
+   "stock_name": "勝麗",
+   "type": "tpex",
+   "date": "2020-06-13"
+  }
+ ]
+}

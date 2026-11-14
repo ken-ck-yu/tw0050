@@ -1,0 +1,41 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "date": "2025-03-31",
+   "stock_id": "2330",
+   "type": "CashAndCashEquivalents",
+   "value": 2394804250000.0,
+   "origin_name": "現金及約當現金"
+  },
+  {
+   "date": "2025-03-31",
+   "stock_id": "2330",
+   "type": "CashAndCashEquivalents_per",
+   "value": 33.57,
+   "origin_name": "現金及約當現金"
+  },
+  {
+   "date": "2025-03-31",
+   "stock_id": "2330",
+   "type": "CurrentFinancialAssetsAtFairvalueThroughProfitOrLoss",
+   "value": 54369000.0,
+   "origin_name": "透過損益按公允價值衡量之金融資產－流動"
+  },
+  {
+   "date": "2025-03-31",
+   "stock_id": "2330",
+   "type": "CurrentFinancialAssetsAtFairvalueThroughProfitOrLoss_per",
+   "value": 0.0,
+   "origin_name": "透過損益按公允價值衡量之金融資產－流動"
+  },
+  {
+   "date": "2025-03-31",
+   "stock_id": "2330",
+   "type": "NonCurrentFinancialAssetsAtFairvalueThroughProfitOrLoss",
+   "value": 15485300000.0,
+   "origin_name": "透過損益按公允價值衡量之金融資產－非流動"
+  }
+ ]
+}

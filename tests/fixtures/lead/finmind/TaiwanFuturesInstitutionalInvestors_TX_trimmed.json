@@ -1,0 +1,71 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "futures_id": "TX",
+   "date": "2025-06-02",
+   "institutional_investors": "自營商",
+   "long_deal_volume": 8570,
+   "long_deal_amount": 35855350,
+   "short_deal_volume": 7981,
+   "short_deal_amount": 33401746,
+   "long_open_interest_balance_volume": 8751,
+   "long_open_interest_balance_amount": 36433579,
+   "short_open_interest_balance_volume": 4959,
+   "short_open_interest_balance_amount": 20636424
+  },
+  {
+   "futures_id": "TX",
+   "date": "2025-06-02",
+   "institutional_investors": "投信",
+   "long_deal_volume": 648,
+   "long_deal_amount": 2704262,
+   "short_deal_volume": 2748,
+   "short_deal_amount": 11462950,
+   "long_open_interest_balance_volume": 51504,
+   "long_open_interest_balance_amount": 214977696,
+   "short_open_interest_balance_volume": 13784,
+   "short_open_interest_balance_amount": 57534416
+  },
+  {
+   "futures_id": "TX",
+   "date": "2025-06-02",
+   "institutional_investors": "外資",
+   "long_deal_volume": 62369,
+   "long_deal_amount": 261801627,
+   "short_deal_volume": 59801,
+   "short_deal_amount": 251004624,
+   "long_open_interest_balance_volume": 21144,
+   "long_open_interest_balance_amount": 88188408,
+   "short_open_interest_balance_volume": 66537,
+   "short_open_interest_balance_amount": 277438109
+  },
+  {
+   "futures_id": "TX",
+   "date": "2025-06-03",
+   "institutional_investors": "自營商",
+   "long_deal_volume": 6646,
+   "long_deal_amount": 27935866,
+   "short_deal_volume": 7854,
+   "short_deal_amount": 33056887,
+   "long_open_interest_balance_volume": 7268,
+   "long_open_interest_balance_amount": 30389742,
+   "short_open_interest_balance_volume": 4584,
+   "short_open_interest_balance_amount": 19174266
+  },
+  {
+   "futures_id": "TX",
+   "date": "2025-06-03",
+   "institutional_investors": "投信",
+   "long_deal_volume": 754,
+   "long_deal_amount": 3163555,
+   "short_deal_volume": 2009,
+   "short_deal_amount": 8436427,
+   "long_open_interest_balance_volume": 50113,
+   "long_open_interest_balance_amount": 210214012,
+   "short_open_interest_balance_volume": 13648,
+   "short_open_interest_balance_amount": 57250630
+  }
+ ]
+}

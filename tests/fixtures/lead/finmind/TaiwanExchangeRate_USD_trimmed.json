@@ -1,0 +1,46 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "date": "2025-06-02",
+   "currency": "USD",
+   "cash_buy": 29.57,
+   "cash_sell": 30.24,
+   "spot_buy": 29.92,
+   "spot_sell": 30.02
+  },
+  {
+   "date": "2025-06-03",
+   "currency": "USD",
+   "cash_buy": 29.59,
+   "cash_sell": 30.26,
+   "spot_buy": 29.94,
+   "spot_sell": 30.04
+  },
+  {
+   "date": "2025-06-04",
+   "currency": "USD",
+   "cash_buy": 29.545,
+   "cash_sell": 30.215,
+   "spot_buy": 29.895,
+   "spot_sell": 29.995
+  },
+  {
+   "date": "2025-06-05",
+   "currency": "USD",
+   "cash_buy": 29.52,
+   "cash_sell": 30.19,
+   "spot_buy": 29.87,
+   "spot_sell": 29.97
+  },
+  {
+   "date": "2025-06-06",
+   "currency": "USD",
+   "cash_buy": 29.52,
+   "cash_sell": 30.19,
+   "spot_buy": 29.87,
+   "spot_sell": 29.97
+  }
+ ]
+}

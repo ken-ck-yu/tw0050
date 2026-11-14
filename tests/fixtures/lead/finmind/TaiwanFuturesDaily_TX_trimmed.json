@@ -1,0 +1,81 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "date": "2025-06-02",
+   "futures_id": "TX",
+   "contract_date": "202506",
+   "open": 21281.0,
+   "max": 21285.0,
+   "min": 20934.0,
+   "close": 21060.0,
+   "spread": -257.0,
+   "spread_per": -1.21,
+   "volume": 56079,
+   "settlement_price": 0.0,
+   "open_interest": 0,
+   "trading_session": "after_market"
+  },
+  {
+   "date": "2025-06-02",
+   "futures_id": "TX",
+   "contract_date": "202507",
+   "open": 21007.0,
+   "max": 21007.0,
+   "min": 20642.0,
+   "close": 20760.0,
+   "spread": -251.0,
+   "spread_per": -1.19,
+   "volume": 579,
+   "settlement_price": 0.0,
+   "open_interest": 0,
+   "trading_session": "after_market"
+  },
+  {
+   "date": "2025-06-02",
+   "futures_id": "TX",
+   "contract_date": "202508",
+   "open": 20761.0,
+   "max": 20770.0,
+   "min": 20513.0,
+   "close": 20596.0,
+   "spread": -237.0,
+   "spread_per": -1.14,
+   "volume": 11,
+   "settlement_price": 0.0,
+   "open_interest": 0,
+   "trading_session": "after_market"
+  },
+  {
+   "date": "2025-06-02",
+   "futures_id": "TX",
+   "contract_date": "202509",
+   "open": 20673.0,
+   "max": 20678.0,
+   "min": 20400.0,
+   "close": 20500.0,
+   "spread": -267.0,
+   "spread_per": -1.29,
+   "volume": 45,
+   "settlement_price": 0.0,
+   "open_interest": 0,
+   "trading_session": "after_market"
+  },
+  {
+   "date": "2025-06-02",
+   "futures_id": "TX",
+   "contract_date": "202512",
+   "open": 20590.0,
+   "max": 20590.0,
+   "min": 20300.0,
+   "close": 20445.0,
+   "spread": -215.0,
+   "spread_per": -1.04,
+   "volume": 18,
+   "settlement_price": 0.0,
+   "open_interest": 0,
+   "trading_session": "after_market"
+  }
+ ]
+}

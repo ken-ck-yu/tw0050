@@ -1,0 +1,41 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "date": "2025-03-31",
+   "stock_id": "2330",
+   "type": "ReceivableIncrease",
+   "value": 29000965000.0,
+   "origin_name": "應收帳款（增加）減少"
+  },
+  {
+   "date": "2025-03-31",
+   "stock_id": "2330",
+   "type": "OtherInvestingActivities",
+   "value": 35149257000.0,
+   "origin_name": "其他投資活動"
+  },
+  {
+   "date": "2025-03-31",
+   "stock_id": "2330",
+   "type": "NetIncomeBeforeTax",
+   "value": 430895412000.0,
+   "origin_name": "本期稅前淨利（淨損）"
+  },
+  {
+   "date": "2025-03-31",
+   "stock_id": "2330",
+   "type": "RedemptionOfBonds",
+   "value": -3000000000.0,
+   "origin_name": "償還公司債"
+  },
+  {
+   "date": "2025-03-31",
+   "stock_id": "2330",
+   "type": "InterestExpense",
+   "value": 2677274000.0,
+   "origin_name": "利息費用"
+  }
+ ]
+}

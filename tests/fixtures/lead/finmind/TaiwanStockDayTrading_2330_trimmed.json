@@ -1,0 +1,46 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "stock_id": "2330",
+   "date": "2025-06-02",
+   "BuyAfterSale": "",
+   "Volume": 6685000,
+   "BuyAmount": 6363253000,
+   "SellAmount": 6369240000
+  },
+  {
+   "stock_id": "2330",
+   "date": "2025-06-03",
+   "BuyAfterSale": "",
+   "Volume": 5216000,
+   "BuyAmount": 4984002000,
+   "SellAmount": 4989893000
+  },
+  {
+   "stock_id": "2330",
+   "date": "2025-06-04",
+   "BuyAfterSale": "",
+   "Volume": 5346000,
+   "BuyAmount": 5229383000,
+   "SellAmount": 5266104000
+  },
+  {
+   "stock_id": "2330",
+   "date": "2025-06-05",
+   "BuyAfterSale": "",
+   "Volume": 3844000,
+   "BuyAmount": 3825041000,
+   "SellAmount": 3830350000
+  },
+  {
+   "stock_id": "2330",
+   "date": "2025-06-06",
+   "BuyAfterSale": "",
+   "Volume": 1910000,
+   "BuyAmount": 1898771000,
+   "SellAmount": 1901160000
+  }
+ ]
+}

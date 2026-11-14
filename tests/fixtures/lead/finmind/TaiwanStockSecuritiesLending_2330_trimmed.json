@@ -1,0 +1,56 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "date": "2025-06-02",
+   "stock_id": "2330",
+   "transaction_type": "議借",
+   "volume": 5200,
+   "fee_rate": 0.15,
+   "close": 946.0,
+   "original_return_date": "2025-12-02",
+   "original_lending_period": 183
+  },
+  {
+   "date": "2025-06-02",
+   "stock_id": "2330",
+   "transaction_type": "競價",
+   "volume": 100,
+   "fee_rate": 0.1,
+   "close": 946.0,
+   "original_return_date": "2025-12-02",
+   "original_lending_period": 183
+  },
+  {
+   "date": "2025-06-02",
+   "stock_id": "2330",
+   "transaction_type": "議借",
+   "volume": 11,
+   "fee_rate": 0.25,
+   "close": 946.0,
+   "original_return_date": "2025-12-02",
+   "original_lending_period": 183
+  },
+  {
+   "date": "2025-06-02",
+   "stock_id": "2330",
+   "transaction_type": "議借",
+   "volume": 1867,
+   "fee_rate": 0.57,
+   "close": 946.0,
+   "original_return_date": "2025-12-02",
+   "original_lending_period": 183
+  },
+  {
+   "date": "2025-06-02",
+   "stock_id": "2330",
+   "transaction_type": "議借",
+   "volume": 1540,
+   "fee_rate": 0.37,
+   "close": 946.0,
+   "original_return_date": "2025-12-02",
+   "original_lending_period": 183
+  }
+ ]
+}

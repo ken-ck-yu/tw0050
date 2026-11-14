@@ -1,0 +1,41 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "date": "2025-06-02",
+   "stock_id": "2330",
+   "dividend_yield": 1.8,
+   "PER": 18.74,
+   "PBR": 5.38
+  },
+  {
+   "date": "2025-06-03",
+   "stock_id": "2330",
+   "dividend_yield": 1.79,
+   "PER": 18.82,
+   "PBR": 5.4
+  },
+  {
+   "date": "2025-06-04",
+   "stock_id": "2330",
+   "dividend_yield": 1.72,
+   "PER": 19.61,
+   "PBR": 5.63
+  },
+  {
+   "date": "2025-06-05",
+   "stock_id": "2330",
+   "dividend_yield": 1.7,
+   "PER": 19.77,
+   "PBR": 5.67
+  },
+  {
+   "date": "2025-06-06",
+   "stock_id": "2330",
+   "dividend_yield": 1.71,
+   "PER": 19.71,
+   "PBR": 5.65
+  }
+ ]
+}

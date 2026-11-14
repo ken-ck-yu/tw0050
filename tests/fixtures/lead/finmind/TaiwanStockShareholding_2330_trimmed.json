@@ -1,0 +1,81 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "date": "2025-06-02",
+   "stock_id": "2330",
+   "stock_name": "台積電",
+   "InternationalCode": "TW0002330008",
+   "ForeignInvestmentRemainingShares": 7090912669,
+   "ForeignInvestmentShares": 18841820573,
+   "ForeignInvestmentRemainRatio": 27.34,
+   "ForeignInvestmentSharesRatio": 72.65,
+   "ForeignInvestmentUpperLimitRatio": 100.0,
+   "ChineseInvestmentUpperLimitRatio": 100.0,
+   "NumberOfSharesIssued": 25932733242,
+   "RecentlyDeclareDate": "2025-05-15",
+   "note": ""
+  },
+  {
+   "date": "2025-06-03",
+   "stock_id": "2330",
+   "stock_name": "台積電",
+   "InternationalCode": "TW0002330008",
+   "ForeignInvestmentRemainingShares": 7091947537,
+   "ForeignInvestmentShares": 18840785705,
+   "ForeignInvestmentRemainRatio": 27.34,
+   "ForeignInvestmentSharesRatio": 72.65,
+   "ForeignInvestmentUpperLimitRatio": 100.0,
+   "ChineseInvestmentUpperLimitRatio": 100.0,
+   "NumberOfSharesIssued": 25932733242,
+   "RecentlyDeclareDate": "2025-05-15",
+   "note": ""
+  },
+  {
+   "date": "2025-06-04",
+   "stock_id": "2330",
+   "stock_name": "台積電",
+   "InternationalCode": "TW0002330008",
+   "ForeignInvestmentRemainingShares": 7089756883,
+   "ForeignInvestmentShares": 18842976359,
+   "ForeignInvestmentRemainRatio": 27.33,
+   "ForeignInvestmentSharesRatio": 72.66,
+   "ForeignInvestmentUpperLimitRatio": 100.0,
+   "ChineseInvestmentUpperLimitRatio": 100.0,
+   "NumberOfSharesIssued": 25932733242,
+   "RecentlyDeclareDate": "2025-05-15",
+   "note": ""
+  },
+  {
+   "date": "2025-06-05",
+   "stock_id": "2330",
+   "stock_name": "台積電",
+   "InternationalCode": "TW0002330008",
+   "ForeignInvestmentRemainingShares": 7088942278,
+   "ForeignInvestmentShares": 18843673243,
+   "ForeignInvestmentRemainRatio": 27.33,
+   "ForeignInvestmentSharesRatio": 72.66,
+   "ForeignInvestmentUpperLimitRatio": 100.0,
+   "ChineseInvestmentUpperLimitRatio": 100.0,
+   "NumberOfSharesIssued": 25932615521,
+   "RecentlyDeclareDate": "2025-06-05",
+   "note": " <a href='https://mopsov.twse.com.tw/mops/web/t98sb02' target=_blank>2</a>"
+  },
+  {
+   "date": "2025-06-06",
+   "stock_id": "2330",
+   "stock_name": "台積電",
+   "InternationalCode": "TW0002330008",
+   "ForeignInvestmentRemainingShares": 7100041359,
+   "ForeignInvestmentShares": 18832574162,
+   "ForeignInvestmentRemainRatio": 27.37,
+   "ForeignInvestmentSharesRatio": 72.62,
+   "ForeignInvestmentUpperLimitRatio": 100.0,
+   "ChineseInvestmentUpperLimitRatio": 100.0,
+   "NumberOfSharesIssued": 25932615521,
+   "RecentlyDeclareDate": "2025-06-05",
+   "note": ""
+  }
+ ]
+}

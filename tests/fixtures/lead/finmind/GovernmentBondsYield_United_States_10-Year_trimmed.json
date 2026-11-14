@@ -1,0 +1,31 @@
+{
+ "msg": "success",
+ "status": 200,
+ "data": [
+  {
+   "date": "2025-06-02",
+   "name": "United States 10-Year",
+   "value": 4.46
+  },
+  {
+   "date": "2025-06-03",
+   "name": "United States 10-Year",
+   "value": 4.46
+  },
+  {
+   "date": "2025-06-04",
+   "name": "United States 10-Year",
+   "value": 4.37
+  },
+  {
+   "date": "2025-06-05",
+   "name": "United States 10-Year",
+   "value": 4.4
+  },
+  {
+   "date": "2025-06-06",
+   "name": "United States 10-Year",
+   "value": 4.51
+  }
+ ]
+}
