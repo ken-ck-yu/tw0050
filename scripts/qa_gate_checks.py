@@ -31,7 +31,7 @@ def say(status: str, name: str, detail: str) -> None:
 KEYS = {
     "trading_calendar": "event_date",
     "prices_raw": "stock_id, event_date",
-    "shares_issued": "stock_id, event_date",
+    "shares_issued": "market, stock_id, event_date",
     "market_cap": "stock_id, event_date",
     "universe_membership": "stock_id, month_end",
     "delistings": "stock_id, event_date",
@@ -127,8 +127,8 @@ say("NOTE", "revenue unit 2330 2024-04", f"{r} (TSMC published 236.02B NT$)")
 # 9. market_cap = close x shares_issued
 try:
     n = one(
-        f"""select count(*) from {src('market_cap')} m join {src('prices_raw')} p using (stock_id, event_date)
-join {src('shares_issued')} s using (stock_id, event_date)
+        f"""select count(*) from {src('market_cap')} m join {src("prices_raw")} p using (market, stock_id, event_date)
+join {src("shares_issued")} s using (market, stock_id, event_date)
 where abs(m.market_cap_ntd - p.close * s.shares_issued) > 1"""
     )[0][0]
     say("PASS" if n == 0 else "FAIL", "market_cap = close x shares", f"{n} rows differ by more than 1")
