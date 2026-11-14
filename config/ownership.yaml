@@ -122,3 +122,16 @@ F:
   - docs/COVERAGE_REPORT.md
   - docs/QA_FINDINGS.md
   - audit/runs/*_agent_f_*.md
+evaluator:
+  - src/twdata/research/__init__.py
+  - src/twdata/research/evaluator/**
+  - tests/research/evaluator/**
+  - docs/data_dictionary/research_evaluator.md
+  - research/EVALUATOR_SHA256
+  - audit/runs/*_evaluator_*.md
+strategy:
+  - src/twdata/research/strategies/**
+  - tests/research/strategies/**
+  - research/cards/**
+  - research/runs/**
+  - audit/runs/*_strategy_*.md
