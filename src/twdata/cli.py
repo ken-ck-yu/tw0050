@@ -101,6 +101,8 @@ def cmd_status(a, settings) -> int:
     for e in entries:
         if a.dataset and e["dataset"] != a.dataset:
             continue
+        if "completed" not in e:
+            continue  # side files such as stock_info_duplicates are not progress state
         done = e["completed"]
         text = (
             f"{len(done)} ranges, last {done[-1]}"
