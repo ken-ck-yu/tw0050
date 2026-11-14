@@ -149,6 +149,9 @@ def test_qa_area_paths(settings):
     assert (settings.data_dir / "raw" / "qa" / "twse" / "ds").is_dir()
     assert _shards(settings, "raw") == []
     assert _manifest(settings, "ds") == []  # raw manifest untouched
+    qa_manifest = paths.manifest_file(settings, "twse", "ds", "qa")
+    assert qa_manifest == settings.data_dir / "state" / "manifest" / "qa" / "twse" / "ds.jsonl"
+    assert qa_manifest.exists()
     assert cache.verify("twse", "ds") == []
     with pytest.raises(ValueError):
         RawCache(settings, area="nope")

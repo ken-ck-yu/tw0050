@@ -97,9 +97,7 @@ class RawCache:
         return paths.raw_dir(self.settings, source, dataset, self.area)
 
     def _manifest(self, source: str, dataset: str) -> Path:
-        # The manifest path has no area, so qa gets its own subfolder to avoid mixing.
-        ds = dataset if self.area == "raw" else f"qa/{dataset}"
-        return paths.manifest_file(self.settings, source, ds)
+        return paths.manifest_file(self.settings, source, dataset, self.area)
 
     # -- writing -------------------------------------------------------------------------
     @staticmethod
