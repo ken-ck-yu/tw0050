@@ -49,19 +49,19 @@ def main() -> int:
     )
     dump(
         "prices_raw",
-        "SELECT * FROM default_prices_raw WHERE event_date <= DATE '%s' "
-        "AND stock_id IN (SELECT stock_id FROM keep_stocks)" % d,
+        f"SELECT * FROM default_prices_raw WHERE event_date <= DATE '{d}' "
+        "AND stock_id IN (SELECT stock_id FROM keep_stocks)",
     )
     dump(
         "price_limits",
-        "SELECT * FROM default_price_limits WHERE event_date <= DATE '%s' "
-        "AND stock_id IN (SELECT stock_id FROM keep_stocks)" % d,
+        f"SELECT * FROM default_price_limits WHERE event_date <= DATE '{d}' "
+        "AND stock_id IN (SELECT stock_id FROM keep_stocks)",
     )
     dump("status_events", f"SELECT * FROM default_status_events WHERE event_date <= DATE '{d}'")
     dump(
         "monthly_revenue",
-        "SELECT * FROM default_monthly_revenue WHERE event_date <= DATE '%s' "
-        "AND stock_id IN (SELECT stock_id FROM keep_stocks)" % d,
+        f"SELECT * FROM default_monthly_revenue WHERE event_date <= DATE '{d}' "
+        "AND stock_id IN (SELECT stock_id FROM keep_stocks)",
     )
     dump("benchmark_index", f"SELECT * FROM default_benchmark_index WHERE event_date <= DATE '{d}'")
     dump(
