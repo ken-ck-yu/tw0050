@@ -62,7 +62,9 @@ def get(url, params=None):
 
 
 info = get("https://api.web.finmindtrade.com/v2/user_info")
-keep = {k: info[k] for k in ("level", "level_title", "user_count", "api_request_limit") if k in info}
+keep = {
+    k: info[k] for k in ("level", "level_title", "user_count", "api_request_limit") if k in info
+}
 (OUT / "user_info.json").write_text(json.dumps(keep, indent=1), encoding="utf-8")
 print("user_info keys saved:", sorted(keep))
 for name, data_id, start, end in JOBS:
@@ -80,6 +82,7 @@ for name, data_id, start, end in JOBS:
     doc = {"msg": body.get("msg"), "status": body.get("status"), "data": rows}
     tag = f"{name}_{data_id}" if data_id else name
     (OUT / f"{tag.replace(' ', '_')}_trimmed.json").write_text(
-        json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+        json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8"
+    )
     print("saved", tag, len(rows))
 print("DONE")

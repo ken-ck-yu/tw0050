@@ -9,6 +9,7 @@ pluggy==1.7.0
 pyarrow==26.0.1
 Pygments==2.21.0
 pytest==9.2.0
+pytz==2026.6
 PyYAML==6.0.3
 requests==2.34.2
 ruff==0.17.5

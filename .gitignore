@@ -30,3 +30,6 @@ venv/
 
 # Audit: commit reports/retrospectives, not raw event log (contains local paths)
 audit/events.jsonl
+
+# Agent worktrees (local only)
+.claude/worktrees/

@@ -76,8 +76,12 @@ def write(rel, text):
 
 
 def synthetic(rel, status, body, headers=None):
-    write(rel, json.dumps({"status": status, "headers": headers or {}, "body": body},
-                          ensure_ascii=False, indent=1))
+    write(
+        rel,
+        json.dumps(
+            {"status": status, "headers": headers or {}, "body": body}, ensure_ascii=False, indent=1
+        ),
+    )
 
 
 def main():
@@ -97,23 +101,48 @@ def main():
         (OUT / "snapshot").mkdir(parents=True, exist_ok=True)
         shutil.copy(f, OUT / "snapshot" / f"{name}.json")
         lines.append(f"- `snapshot/{name}.json` from `{f}`")
-    synthetic("finmind/synthetic_error_402.json", 402, '{"msg":"Requests reach the upper limit","status":402}')
+    synthetic(
+        "finmind/synthetic_error_402.json",
+        402,
+        '{"msg":"Requests reach the upper limit","status":402}',
+    )
     synthetic("finmind/synthetic_error_400_token.json", 400, '{"msg":"TokenIllegal","status":400}')
     synthetic("finmind/synthetic_error_403.json", 403, '{"msg":"ip banned","status":403}')
     synthetic("finmind/synthetic_error_429.json", 429, '{"msg":"too many requests","status":429}')
     synthetic("tpex/synthetic_redirect_302.json", 302, "", {"Location": "/errors"})
-    synthetic("twse/synthetic_stat_not_ok_trading_day.json", 200, '{"stat":"很抱歉，沒有符合條件的資料!"}')
-    synthetic("twse/synthetic_empty_range.json", 200, '{"stat":"很抱歉，沒有符合條件的資料!","total":0}')
-    synthetic("tpex/synthetic_empty_holiday.json", 200,
-              '{"stat":"ok","date":"20250530","tables":[{"title":"","totalCount":0,"fields":[],"data":[]}]}')
-    lines += ["", "Synthetic fixtures (no live observation of these replies exists): "
-              "`finmind/synthetic_error_*.json`, `tpex/synthetic_redirect_302.json`, "
-              "`twse/synthetic_*.json`, `tpex/synthetic_empty_holiday.json`.",
-              "FinMind live captures are written by `scripts/spikes/capture_finmind_fixtures.py`."]
+    synthetic(
+        "twse/synthetic_stat_not_ok_trading_day.json", 200, '{"stat":"很抱歉，沒有符合條件的資料!"}'
+    )
+    synthetic(
+        "twse/synthetic_empty_range.json", 200, '{"stat":"很抱歉，沒有符合條件的資料!","total":0}'
+    )
+    synthetic(
+        "tpex/synthetic_empty_holiday.json",
+        200,
+        '{"stat":"ok","date":"20250530","tables":[{"title":"","totalCount":0,"fields":[],"data":[]}]}',
+    )
+    lines += [
+        "",
+        "Synthetic fixtures (no live observation of these replies exists): "
+        "`finmind/synthetic_error_*.json`, `tpex/synthetic_redirect_302.json`, "
+        "`twse/synthetic_*.json`, `tpex/synthetic_empty_holiday.json`.",
+        "FinMind live captures are written by `scripts/spikes/capture_finmind_fixtures.py`.",
+    ]
     write("README.md", "\n".join(lines) + "\n")
     total = sum(p.stat().st_size for p in OUT.rglob("*") if p.is_file())
-    big = [str(p.relative_to(OUT)) for p in OUT.rglob("*") if p.is_file() and p.stat().st_size > 300_000]
-    print("fixtures", sum(1 for p in OUT.rglob("*") if p.is_file()), "bytes", total, "over 300KB:", big)
+    big = [
+        str(p.relative_to(OUT))
+        for p in OUT.rglob("*")
+        if p.is_file() and p.stat().st_size > 300_000
+    ]
+    print(
+        "fixtures",
+        sum(1 for p in OUT.rglob("*") if p.is_file()),
+        "bytes",
+        total,
+        "over 300KB:",
+        big,
+    )
 
 
 if __name__ == "__main__":
